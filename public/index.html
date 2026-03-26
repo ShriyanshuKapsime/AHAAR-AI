@@ -467,6 +467,7 @@
 
         /* ⭐ STORE ID */
         localStorage.setItem("token", data.token);
+        localStorage.setItem("userData", JSON.stringify(data.user));
 
         /* ⭐ REDIRECT BASED ON PROFILE EXISTENCE */
         if (data.hasProfile) {

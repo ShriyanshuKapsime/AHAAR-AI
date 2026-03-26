@@ -71,6 +71,7 @@ router.post('/analyze', async (req, res) => {
         res.json({
             raw: mealTotals,
             percentages,
+            rda,
             insight: smartRecommendation.symptoms, // 🔥 This maps to the clinical insight box
             recommendation: smartRecommendation,
             mealPlan: mealPlan.meals,

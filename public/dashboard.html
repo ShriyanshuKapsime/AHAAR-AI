@@ -54,11 +54,12 @@
       <div class="bg-white rounded-[2rem] p-2 border border-stone-200/80 shadow-sm ai-input-glow transition-all duration-300">
         <div class="relative">
           <i data-lucide="bot" class="absolute left-6 top-6 w-6 h-6 text-emerald-600"></i>
-          <textarea id="mealInput" rows="2" placeholder="e.g., '2 roti and 1 bowl sambar'" class="w-full bg-transparent resize-none text-emerald-950 text-xl pl-16 pr-6 py-6 focus:outline-none font-medium placeholder:text-stone-300"></textarea>
+          <textarea id="mealInput" rows="2" placeholder="e.g., '2 roti and 1 cup dal'" class="w-full bg-transparent resize-none text-emerald-950 text-xl pl-16 pr-6 py-6 focus:outline-none font-medium placeholder:text-stone-300"></textarea>
           <div class="flex justify-between items-center px-6 pb-4 pt-2 border-t border-stone-50">
             <div class="flex items-center gap-2 text-xs text-stone-400 font-bold uppercase tracking-wider"><i data-lucide="brain-circuit" class="w-4 h-4"></i> Agentic Extractor</div>
             <button id="analyzeBtn" onclick="analyzeMeal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
               <i id="btnIcon" data-lucide="sparkles" class="w-4 h-4"></i>
+              <i id="btnSpinner" data-lucide="loader-2" class="w-4 h-4 text-emerald-100 animate-spin hidden"></i>
               <span id="btnText">Analyze Meal</span>
             </button>
           </div>
@@ -70,8 +71,18 @@
           <h3 class="font-bold text-lg text-emerald-950 mb-6 flex items-center gap-2 border-b border-stone-100 pb-4">
             <i data-lucide="activity" class="w-5 h-5 text-saffron-500"></i> RDA Delivery
           </h3>
-          <div class="relative w-full aspect-square max-h-[350px] mx-auto flex justify-center items-center">
+          
+          <div class="relative w-[280px] h-[280px] md:w-[320px] md:h-[320px] mx-auto flex justify-center items-center">
             <canvas id="nutrientChart"></canvas>
+          </div>
+
+          <div class="mt-6 border-t border-stone-100 pt-4">
+            <button id="toggleDetailsBtn" onclick="toggleDetails()" class="w-full flex items-center justify-between text-sm font-bold text-emerald-800 hover:text-emerald-600 transition-colors py-2">
+              <span class="flex items-center gap-2"><i data-lucide="list" class="w-4 h-4"></i> View Clinical Breakdown</span>
+              <i id="toggleDetailsIcon" data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300"></i>
+            </button>
+            <div id="detailedBreakdown" class="hidden mt-4 space-y-4 overflow-hidden transition-all duration-300">
+              </div>
           </div>
         </div>
 
@@ -109,10 +120,8 @@
             <i id="retryIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Shuffle Plan
           </button>
         </div>
-        <div id="mealCards" class="grid md:grid-cols-3 gap-6">
-          </div>
+        <div id="mealCards" class="grid md:grid-cols-3 gap-6"></div>
       </section>
-
     </div>
   </main>
 
@@ -120,7 +129,6 @@
     lucide.createIcons();
     let currentGaps = [];
 
-    // Radar Chart Logic
     let chart = new Chart(document.getElementById("nutrientChart"), {
       type: "radar",
       data: {
@@ -136,6 +144,8 @@
         }]
       },
       options: { 
+        responsive: true,
+        maintainAspectRatio: true, 
         scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { font: { family: 'Inter', size: 12, weight: '600' }, color: '#022c22' } } },
         plugins: { legend: { display: false } }
       }
@@ -148,16 +158,84 @@
       icon.style.transform = isHidden ? "rotate(0deg)" : "rotate(180deg)";
     }
 
+    function toggleDetails() {
+      const breakdownDiv = document.getElementById("detailedBreakdown");
+      const icon = document.getElementById("toggleDetailsIcon");
+      const isHidden = breakdownDiv.classList.toggle("hidden");
+      icon.style.transform = isHidden ? "rotate(0deg)" : "rotate(180deg)";
+    }
+
+    // 🏆 BEAUTIFUL RENDERER: Direct Data Mapping with Staggered Animations
+    function renderDetailedBreakdown(raw = {}, rda = {}, percentages = {}) {
+      const container = document.getElementById("detailedBreakdown");
+      container.innerHTML = ""; 
+
+      const metrics = [
+        { key: "calories", label: "Energy", unit: "kcal", icon: "zap", color: "from-saffron-400 to-saffron-600" },
+        { key: "protein", label: "Protein", unit: "g", icon: "beef", color: "from-emerald-400 to-emerald-600" },
+        { key: "iron", label: "Iron", unit: "mg", icon: "anvil", color: "from-rose-400 to-rose-600" },
+        { key: "zinc", label: "Zinc", unit: "mg", icon: "microscope", color: "from-blue-400 to-blue-600" },
+        { key: "magnesium", label: "Magnesium", unit: "mg", icon: "mountain", color: "from-indigo-400 to-indigo-600" },
+        { key: "folate", label: "Folate (B9)", unit: "µg", icon: "dna", color: "from-teal-400 to-teal-600" },
+        { key: "vitaminD", label: "Vitamin D", unit: "µg", icon: "sun", color: "from-amber-300 to-amber-500" }
+      ];
+
+      const fmt = (val) => {
+        const num = Number(val) || 0;
+        return num % 1 === 0 ? num : num.toFixed(1);
+      };
+
+      metrics.forEach((metric, i) => {
+        const rawValue = raw[metric.key] ?? 0;
+        const targetValue = rda[metric.key] ?? 0; 
+        const percentValue = Math.round(percentages[metric.key] ?? 0);
+        const visualPercentage = percentValue > 100 ? 100 : percentValue;
+
+        const html = `
+          <div class="opacity-0 translate-y-2 transition-all duration-500 ease-out" id="row-${i}">
+            <div class="flex justify-between items-end mb-2">
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-white border border-stone-100 shadow-sm"><i data-lucide="${metric.icon}" class="w-3.5 h-3.5 text-emerald-900"></i></div>
+                <div>
+                  <p class="text-[11px] font-bold text-emerald-950 uppercase tracking-tight">${metric.label}</p>
+                  <p class="text-[10px] font-medium text-stone-400">${fmt(rawValue)}${metric.unit} consumed</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-xs font-bold text-emerald-950">${percentValue}% <span class="text-[10px] text-stone-300 font-normal">/ target ${fmt(targetValue)}${metric.unit}</span></p>
+              </div>
+            </div>
+            <div class="relative w-full bg-stone-100 rounded-full h-2.5 overflow-hidden shadow-inner">
+              <div class="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${metric.color} transition-all duration-[1500ms] cubic-bezier(0.34, 1.56, 0.64, 1)" 
+                   style="width: 0%" id="bar-${i}"></div>
+            </div>
+          </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        setTimeout(() => {
+          document.getElementById(`row-${i}`).classList.remove('opacity-0', 'translate-y-2');
+          setTimeout(() => {
+            const bar = document.getElementById(`bar-${i}`);
+            if(bar) bar.style.width = `${visualPercentage}%`;
+          }, 200);
+        }, i * 100);
+      });
+      lucide.createIcons();
+    }
+
     async function analyzeMeal() {
       const meal = document.getElementById("mealInput").value;
       if (!meal.trim()) return;
 
       const btn = document.getElementById("analyzeBtn");
-      document.getElementById("btnText").innerText = "Extracting...";
+      document.getElementById("btnText").innerText = "Analyzing...";
       document.getElementById("btnIcon").classList.add("hidden");
+      document.getElementById("btnSpinner").classList.remove("hidden");
 
       try {
         const token = localStorage.getItem("token");
+        // 🛡️ DYNAMIC PROFILE: Pull exactly what you set in onboarding.html
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
         const res = await fetch("http://localhost:5000/api/nutrition/analyze", {
@@ -167,33 +245,36 @@
         });
 
         const data = await res.json();
-        currentGaps = data.lowNutrients; // Store for retry
+        console.log("📥 Raw Data:", data);
 
-        // 1. Update Chart
+        // Update Chart
+        const achievedData = data.percentages || data.achieved || {};
         chart.data.datasets[0].data = [
-          data.percentages.protein, data.percentages.iron, data.percentages.zinc,
-          data.percentages.magnesium, data.percentages.folate, data.percentages.vitaminD, data.percentages.calories
+          achievedData.protein, achievedData.iron, achievedData.zinc,
+          achievedData.magnesium, achievedData.folate, achievedData.vitaminD, achievedData.calories
         ];
         chart.update();
 
-        // 2. Update Symptoms and Tweaks
+        // 📈 Render the detailed clinical bars using direct mapping
+        renderDetailedBreakdown(data.raw, data.rda, achievedData);
+
+        // Update Text Logic
         document.getElementById("insightText").innerText = data.insight;
-        document.getElementById("recommendationShort").innerText = data.recommendation.short;
+        document.getElementById("recommendationShort").innerText = data.recommendation?.short || "Analysis complete.";
         
         const list = document.getElementById("deficiencyList");
-        list.innerHTML = data.recommendation.details.map(item => `
-          <div class="p-3 bg-emerald-950/50 rounded-xl border border-emerald-800/30">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-[10px] font-bold text-saffron-400 uppercase tracking-tighter">${item.nutrient} Boost</span>
-            </div>
-            <p class="text-sm font-bold text-emerald-50">${item.suggestion}</p>
-            <p class="text-[11px] text-emerald-400 italic mt-1">${item.reason}</p>
-          </div>
-        `).join('');
+        if (data.recommendation?.details) {
+            list.innerHTML = data.recommendation.details.map(item => `
+              <div class="p-3 bg-emerald-950/50 rounded-xl border border-emerald-800/30">
+                <span class="text-[10px] font-bold text-saffron-400 uppercase tracking-tighter">${item.nutrient} Boost</span>
+                <p class="text-sm font-bold text-emerald-50">${item.suggestion}</p>
+                <p class="text-[11px] text-emerald-400 italic mt-1">${item.reason}</p>
+              </div>
+            `).join('');
+        }
 
-        // 3. Render Tomorrow's Plan
         document.getElementById("mealPlanSection").classList.remove("hidden");
-        renderMealPlan(data.mealPlan);
+        if (data.mealPlan) renderMealPlan(data.mealPlan);
 
       } catch (e) {
         console.error(e);
@@ -201,6 +282,7 @@
       } finally {
         document.getElementById("btnText").innerText = "Analyze Meal";
         document.getElementById("btnIcon").classList.remove("hidden");
+        document.getElementById("btnSpinner").classList.add("hidden");
         lucide.createIcons();
       }
     }
@@ -208,11 +290,9 @@
     function renderMealPlan(meals) {
       const container = document.getElementById("mealCards");
       container.innerHTML = meals.map(m => `
-        <div class="bg-white border border-stone-200 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center gap-2 mb-4">
-             <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">${m.type}</span>
-          </div>
-          <h5 class="font-bold text-emerald-950 text-lg mb-2">${m.dish}</h5>
+        <div class="bg-white border border-stone-200 rounded-[2rem] p-6 shadow-sm">
+          <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase rounded-lg">${m.type}</span>
+          <h5 class="font-bold text-emerald-950 text-lg my-2">${m.dish}</h5>
           <p class="text-stone-500 text-xs leading-relaxed font-medium">${m.benefit}</p>
         </div>
       `).join('');
@@ -221,7 +301,6 @@
     async function retryMealPlan() {
       const icon = document.getElementById("retryIcon");
       icon.classList.add("animate-spin-slow");
-
       try {
         const res = await fetch("http://localhost:5000/api/nutrition/regen-plan", {
           method: "POST",
@@ -231,7 +310,6 @@
         const data = await res.json();
         renderMealPlan(data.mealPlan);
       } catch (e) { console.error(e); }
-      
       setTimeout(() => icon.classList.remove("animate-spin-slow"), 800);
     }
 

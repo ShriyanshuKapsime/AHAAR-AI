@@ -52,8 +52,21 @@ router.post("/login", async (req, res) => {
     const profile = await UserProfile.findOne({ userId: user._id });
     const hasProfile = !!profile; // Converts to true if found, false if not
 
-    // Return both the token and the profile status
-    res.json({ token, hasProfile });
+    // Return the token, profile status, and persisted physical profile fields
+    res.json({
+      token,
+      hasProfile,
+      user: profile
+        ? {
+            name: profile.name,
+            height: profile.height,
+            weight: profile.weight,
+            age: profile.age,
+            gender: profile.gender,
+            activity: profile.activity
+          }
+        : null
+    });
 
   } catch (err) {
     console.error(err);
