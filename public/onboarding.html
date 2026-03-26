@@ -4,115 +4,356 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AHAAR — Clinical Baseline</title>
 
-  <title>AHAAR Onboarding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+    rel="stylesheet">
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+          },
+          colors: {
+            cream: '#FAFAF7',
+            emerald: {
+              950: '#022c22',
+              900: '#064e3b',
+              800: '#065f46',
+              600: '#059669',
+              50: '#ecfdf5'
+            },
+            saffron: {
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          },
+          animation: {
+            blob: "blob 10s infinite alternate ease-in-out",
+          },
+          keyframes: {
+            blob: {
+              "0%": { transform: "translate(0px, 0px) scale(1)" },
+              "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+              "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+              "100%": { transform: "translate(0px, 0px) scale(1)" }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
     body {
-      background: #FAFAFA;
-      font-family: Inter, system-ui;
-      color: #1A1A1A;
+      background-color: #FAFAF7;
+      color: #022c22;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 8px 32px 0 rgba(2, 44, 34, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    }
+
+    /* Interactive Infinite Grid - Made Darker */
+    .bg-grid {
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background-size: 40px 40px;
+      /* Increased opacity from 0.03 to 0.09 for a darker, more visible grid */
+      background-image:
+        linear-gradient(to right, rgba(2, 44, 34, 0.09) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(2, 44, 34, 0.09) 1px, transparent 1px);
+      z-index: 0;
+      pointer-events: none;
+      transition: transform 0.1s ease-out;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
+      -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 90%);
+    }
+
+    /* Custom Pill Button Styles - Now turns vibrant green when active */
+    .pill-btn {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .pill-btn.active {
+      /* Vibrant Green when cursor is removed (resting active state) */
+      background-color: #059669;
+      /* Tailwind emerald-600 */
+      color: white;
+      border-color: #059669;
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .pill-btn.active:hover {
+      /* Slightly darker green while hovering */
+      background-color: #047857;
+      /* Tailwind emerald-700 */
+      border-color: #047857;
+    }
+
+    /* Remove number input arrows */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+
+    .animation-delay-4000 {
+      animation-delay: 4s;
     }
   </style>
-
 </head>
 
-<body class="min-h-screen flex items-center justify-center">
+<body
+  class="antialiased selection:bg-emerald-100 selection:text-emerald-900 relative min-h-screen flex flex-col overflow-x-hidden">
 
-  <div class="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-xl">
+  <div id="interactiveGrid" class="bg-grid"></div>
 
-    <h2 class="text-3xl font-black mb-2 text-center">
-      Clinical Baseline
-    </h2>
-
-    <p class="text-gray-500 text-center mb-8">
-      We need a few details to calculate your personalized micronutrient RDA.
-    </p>
-
-    <form id="onboardingForm" class="space-y-5">
-
-      <input id="name" placeholder="Name" class="w-full border p-3 rounded-xl">
-
-      <div class="grid grid-cols-2 gap-4">
-        <input id="height" placeholder="Height (cm)" class="border p-3 rounded-xl">
-        <input id="weight" placeholder="Weight (kg)" class="border p-3 rounded-xl">
-      </div>
-
-      <input id="age" placeholder="Age" class="w-full border p-3 rounded-xl">
-
-      <select id="gender" class="w-full border p-3 rounded-xl">
-        <option value="">Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-        <option>Prefer not to say</option>
-      </select>
-
-      <select id="activity" class="w-full border p-3 rounded-xl">
-        <option value="">Activity Level</option>
-        <option>Physically Active (6-7 days a week)</option>
-        <option>Partially Active (3-5 days a week)</option>
-        <option>Sedentary Lifestyle (0-2 days a week)</option>
-      </select>
-
-      <button type="submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold hover:bg-orange-600">
-        Proceed to Tracker →
-      </button>
-
-    </form>
-
+  <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
+    <div
+      class="absolute w-[500px] h-[500px] bg-saffron-500/10 rounded-full mix-blend-multiply filter blur-[80px] opacity-70 animate-blob">
+    </div>
+    <div
+      class="absolute w-[600px] h-[600px] bg-emerald-600/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 animate-blob animation-delay-2000 translate-x-32 translate-y-20">
+    </div>
+    <div
+      class="absolute w-[400px] h-[400px] bg-orange-400/10 rounded-full mix-blend-multiply filter blur-[80px] opacity-50 animate-blob animation-delay-4000 -translate-x-32 -translate-y-20">
+    </div>
   </div>
 
+  <nav class="relative z-50 border-b border-stone-200/60 bg-cream/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-emerald-950 flex items-center justify-center shadow-sm">
+          <i data-lucide="leaf" class="w-4.5 h-4.5 text-white"></i>
+        </div>
+        <span class="text-lg font-bold text-emerald-950 tracking-tight">ahaar</span>
+      </div>
+      <a href="/index.html"
+        class="text-sm font-medium text-stone-500 hover:text-emerald-950 transition-colors flex items-center gap-1.5 bg-white/50 px-3 py-1.5 rounded-lg border border-stone-200/60">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Cancel
+      </a>
+    </div>
+  </nav>
+
+  <main class="relative z-10 flex-grow flex items-center justify-center py-12 px-6">
+    <div class="w-full max-w-xl">
+
+      <div class="text-center mb-10">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 border border-emerald-200/60 shadow-sm rounded-full mb-5">
+          <i data-lucide="bot" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span class="text-xs font-semibold text-emerald-700 tracking-wide">Step 1 of 3 — AI Calibration</span>
+        </div>
+        <h1 class="font-serif text-3xl md:text-4xl text-emerald-950 leading-snug mb-3">
+          Let's set your <span class="italic text-saffron-600">personal</span> RDA
+        </h1>
+        <p class="text-sm text-stone-500 max-w-md mx-auto">
+          Select your biological parameters to generate a high-fidelity micronutrient target.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-[2rem] p-6 md:p-10">
+        <form id="onboardingForm" class="space-y-8">
+
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-stone-500 uppercase tracking-wider ml-1">Full Name</label>
+            <input id="name" required placeholder="John Doe"
+              class="w-full bg-white/80 border border-stone-200/80 text-emerald-950 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all shadow-sm text-lg font-medium placeholder:font-normal">
+          </div>
+
+          <div class="grid grid-cols-3 gap-4">
+            <div class="space-y-3">
+              <label class="text-xs font-bold text-stone-500 uppercase tracking-wider ml-1">Height</label>
+              <div class="relative">
+                <input id="height" type="number" required placeholder="175"
+                  class="w-full bg-white/80 border border-stone-200/80 text-emerald-950 rounded-2xl pl-5 pr-10 py-4 focus:outline-none focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all shadow-sm text-lg font-medium text-center">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-stone-400">cm</span>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <label class="text-xs font-bold text-stone-500 uppercase tracking-wider ml-1">Weight</label>
+              <div class="relative">
+                <input id="weight" type="number" required placeholder="70"
+                  class="w-full bg-white/80 border border-stone-200/80 text-emerald-950 rounded-2xl pl-5 pr-10 py-4 focus:outline-none focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all shadow-sm text-lg font-medium text-center">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-stone-400">kg</span>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <label class="text-xs font-bold text-stone-500 uppercase tracking-wider ml-1">Age</label>
+              <div class="relative">
+                <input id="age" type="number" required placeholder="24"
+                  class="w-full bg-white/80 border border-stone-200/80 text-emerald-950 rounded-2xl pl-5 pr-10 py-4 focus:outline-none focus:ring-2 focus:ring-saffron-500/20 focus:border-saffron-500 transition-all shadow-sm text-lg font-medium text-center">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-stone-400">yrs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-stone-500 uppercase tracking-wider ml-1">Biological Sex</label>
+            <div class="grid grid-cols-3 gap-3">
+              <button type="button" onclick="selectPill('gender', 'Male', this)"
+                class="pill-btn gender-pill bg-white/80 border border-stone-200/80 text-stone-600 rounded-2xl py-3.5 text-sm font-medium hover:bg-white shadow-sm">Male</button>
+              <button type="button" onclick="selectPill('gender', 'Female', this)"
+                class="pill-btn gender-pill bg-white/80 border border-stone-200/80 text-stone-600 rounded-2xl py-3.5 text-sm font-medium hover:bg-white shadow-sm">Female</button>
+              <button type="button" onclick="selectPill('gender', 'Prefer not to say', this)"
+                class="pill-btn gender-pill bg-white/80 border border-stone-200/80 text-stone-600 rounded-2xl py-3.5 text-sm font-medium hover:bg-white shadow-sm">Other</button>
+            </div>
+            <input type="hidden" id="gender" required>
+          </div>
+
+          <div class="space-y-3">
+            <label
+              class="text-xs font-bold text-stone-500 uppercase tracking-wider ml-1 flex justify-between items-end">
+              <span>Activity Level</span>
+              <span id="activityHint"
+                class="text-[10px] text-saffron-600 font-semibold lowercase tracking-normal"></span>
+            </label>
+            <div class="grid grid-cols-3 gap-3">
+              <button type="button"
+                onclick="selectActivity('Physically Active (6-7 days a week)', '6-7 days/week', this)"
+                class="pill-btn activity-pill bg-white/80 border border-stone-200/80 text-stone-600 rounded-2xl py-3.5 text-sm font-medium hover:bg-white flex flex-col items-center gap-1 shadow-sm">
+                <i data-lucide="flame" class="w-4 h-4 mb-0.5 icon-element"></i> Active
+              </button>
+              <button type="button"
+                onclick="selectActivity('Partially Active (3-5 days a week)', '3-5 days/week', this)"
+                class="pill-btn activity-pill bg-white/80 border border-stone-200/80 text-stone-600 rounded-2xl py-3.5 text-sm font-medium hover:bg-white flex flex-col items-center gap-1 shadow-sm">
+                <i data-lucide="person-standing" class="w-4 h-4 mb-0.5 icon-element"></i> Moderate
+              </button>
+              <button type="button"
+                onclick="selectActivity('Sedentary Lifestyle (0-2 days a week)', '0-2 days/week', this)"
+                class="pill-btn activity-pill bg-white/80 border border-stone-200/80 text-stone-600 rounded-2xl py-3.5 text-sm font-medium hover:bg-white flex flex-col items-center gap-1 shadow-sm">
+                <i data-lucide="armchair" class="w-4 h-4 mb-0.5 icon-element"></i> Sedentary
+              </button>
+            </div>
+            <input type="hidden" id="activity" required>
+          </div>
+
+          <div class="pt-4">
+            <button type="submit"
+              class="w-full relative group overflow-hidden rounded-2xl shadow-[0_0_25px_rgba(249,115,22,0.25)] transition-all hover:shadow-[0_0_35px_rgba(249,115,22,0.45)] hover:-translate-y-1">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-saffron-500 via-orange-500 to-amber-500 group-hover:scale-105 transition-transform duration-500">
+              </div>
+              <div
+                class="relative bg-transparent text-white text-xl font-bold py-5 flex justify-center items-center gap-2 tracking-wide">
+                <i data-lucide="sparkles" class="w-6 h-6 text-yellow-200"></i>
+                Consult AI Health Coach
+              </div>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </main>
+
   <script>
+    // Initialize Icons
+    lucide.createIcons();
 
-    const BASE_URL = "http://localhost:5000/api/user"
+    // Mouse & Scroll Reactive Grid
+    const grid = document.getElementById('interactiveGrid');
+    window.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 40;
+      const y = (e.clientY / window.innerHeight - 0.5) * 40;
+      grid.style.transform = `translate(calc(-25% + ${-x}px), calc(-25% + ${-y}px))`;
+    });
+    window.addEventListener('scroll', () => {
+      grid.style.backgroundPositionY = `${window.scrollY * 0.5}px`;
+    });
 
-    document.getElementById("onboardingForm")
-      .addEventListener("submit", async function (e) {
+    // Pill Button Logic
+    function selectPill(inputId, value, clickedBtn) {
+      document.getElementById(inputId).value = value;
+      const allPills = document.querySelectorAll(`.${inputId}-pill`);
+      allPills.forEach(btn => {
+        btn.classList.remove('active');
+        // Reset icon color for activity pills
+        const icon = btn.querySelector('.icon-element');
+        if (icon) {
+          icon.classList.remove('text-white');
+          icon.classList.add('text-stone-400');
+        }
+      });
 
-        e.preventDefault()
+      clickedBtn.classList.add('active');
+      const activeIcon = clickedBtn.querySelector('.icon-element');
+      if (activeIcon) {
+        activeIcon.classList.remove('text-stone-400');
+        activeIcon.classList.add('text-white');
+      }
+    }
 
-        const userData = {
-          name: document.getElementById("name").value,
-          height: document.getElementById("height").value,
-          weight: document.getElementById("weight").value,
-          age: document.getElementById("age").value,
-          gender: document.getElementById("gender").value,
-          activity: document.getElementById("activity").value
+    function selectActivity(fullValue, hintText, clickedBtn) {
+      selectPill('activity', fullValue, clickedBtn);
+      document.getElementById('activityHint').innerText = hintText;
+    }
+
+    // Backend Submission Logic
+    const BASE_URL = "http://localhost:5000/api/user";
+    document.getElementById("onboardingForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      if (!document.getElementById("gender").value || !document.getElementById("activity").value) {
+        alert("Please select your Gender and Activity Level.");
+        return;
+      }
+
+      const userData = {
+        name: document.getElementById("name").value,
+        height: document.getElementById("height").value,
+        weight: document.getElementById("weight").value,
+        age: document.getElementById("age").value,
+        gender: document.getElementById("gender").value,
+        activity: document.getElementById("activity").value
+      };
+
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(`${BASE_URL}/onboarding`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(userData)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Failed to save baseline.");
+          return;
         }
 
-        const token = localStorage.getItem("token")
+        window.location.href = "/dashboard.html";
 
-        try {
-
-          const res = await fetch(`${BASE_URL}/onboarding`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(userData)
-          })
-
-          const data = await res.json()
-
-          if (!res.ok) {
-            alert(data.message || "Failed")
-            return
-          }
-
-          alert("Profile Saved")
-
-          window.location.href = "/dashboard.html"
-
-        } catch (err) {
-          console.log(err)
-          alert("Server Error")
-        }
-
-      })
-
+      } catch (err) {
+        console.log(err);
+        alert("Server Error");
+      }
+    });
   </script>
 
 </body>

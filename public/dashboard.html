@@ -1,15 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AHAAR — Dashboard</title>
+  <title>AHAAR — Clinical Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+    rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+          },
+          colors: {
+            cream: '#FAFAF7',
+            emerald: {
+              950: '#022c22',
+              900: '#064e3b',
+              800: '#065f46',
+              600: '#059669',
+              50: '#ecfdf5'
+            },
+            saffron: {
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #FAFAF7;
+      color: #022c22;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px 0 rgba(2, 44, 34, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    }
+
+    /* AI Prompt Glow */
+    .ai-input-glow:focus-within {
+      box-shadow: 0 0 25px rgba(5, 150, 105, 0.15);
+      border-color: #059669;
+    }
+
+    /* Subtle background grid */
+    .bg-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: 40px 40px;
+      background-image:
+        linear-gradient(to right, rgba(2, 44, 34, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(2, 44, 34, 0.04) 1px, transparent 1px);
+      z-index: -1;
+      pointer-events: none;
+    }
+  </style>
 </head>
-<body>
-  <h1>Dashboard</h1>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
+
+<body class="antialiased selection:bg-emerald-100 selection:text-emerald-900 min-h-screen flex flex-col">
+
+  <div class="bg-grid"></div>
+
+  <nav class="sticky top-0 z-50 border-b border-stone-200/60 bg-cream/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-emerald-950 flex items-center justify-center shadow-sm">
+          <i data-lucide="leaf" class="w-4.5 h-4.5 text-white"></i>
+        </div>
+        <span class="text-lg font-bold text-emerald-950 tracking-tight">ahaar</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div
+          class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/60 rounded-full">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span class="text-xs font-semibold text-emerald-700 tracking-wide">ICMR-NIN Pipeline Active</span>
+        </div>
+        <button onclick="logout()"
+          class="text-sm font-medium text-stone-500 hover:text-emerald-950 transition-colors flex items-center gap-1.5 bg-white/50 px-3 py-1.5 rounded-lg border border-stone-200/60">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 md:p-10">
+    <div class="max-w-5xl mx-auto space-y-8">
+
+      <header>
+        <h1 class="font-serif text-3xl md:text-4xl font-bold text-emerald-950 mb-2">Today's Clinical Status</h1>
+        <p class="text-stone-500">Log your meals naturally to update your micronutrient vectors.</p>
+      </header>
+
+      <div
+        class="bg-white rounded-[2rem] p-2 border border-stone-200/80 shadow-sm ai-input-glow transition-all duration-300">
+        <div class="relative">
+          <i data-lucide="bot" class="absolute left-6 top-6 w-6 h-6 text-emerald-600"></i>
+          <textarea id="mealInput" rows="2"
+            placeholder="What did you eat today? (e.g., 'I had 2 rotis, a bowl of dal makhani, and maggi')"
+            class="w-full bg-transparent resize-none text-emerald-950 text-lg md:text-xl pl-16 pr-6 py-6 focus:outline-none placeholder:text-stone-300 placeholder:font-light font-medium"></textarea>
+
+          <div class="flex justify-between items-center px-6 pb-4 pt-2 border-t border-stone-50">
+            <div class="flex items-center gap-2 text-xs text-stone-400 font-medium tracking-wide uppercase">
+              <i data-lucide="brain-circuit" class="w-4 h-4"></i> Agentic NLP Extractor
+            </div>
+
+            <button id="analyzeBtn" onclick="analyzeMeal()"
+              class="relative group overflow-hidden rounded-xl shadow-[0_0_15px_rgba(5,150,105,0.2)] transition-all hover:shadow-[0_0_25px_rgba(5,150,105,0.4)] hover:-translate-y-0.5">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500 group-hover:scale-105 transition-transform duration-500">
+              </div>
+              <div
+                class="relative bg-transparent text-white text-sm font-bold px-6 py-3 flex justify-center items-center gap-2 tracking-wide">
+                <i id="btnIcon" data-lucide="sparkles" class="w-4 h-4 text-emerald-100"></i>
+                <i id="btnSpinner" data-lucide="loader-2" class="w-4 h-4 text-emerald-100 animate-spin hidden"></i>
+                <span id="btnText">Analyze Meal</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8 items-start">
+
+        <div class="glass-card rounded-[2rem] p-8">
+          <div class="flex justify-between items-center mb-6 pb-4 border-b border-stone-100">
+            <h3 class="font-bold text-lg text-emerald-950 flex items-center gap-2">
+              <i data-lucide="activity" class="w-5 h-5 text-saffron-500"></i> RDA Delivery
+            </h3>
+            <span class="text-xs font-bold uppercase tracking-widest text-stone-400">Live Data</span>
+          </div>
+          <div class="relative w-full aspect-square max-h-[350px] mx-auto flex justify-center items-center">
+            <canvas id="nutrientChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-emerald-950 rounded-[2rem] p-8 shadow-xl relative overflow-hidden h-full">
+          <div
+            class="absolute top-0 right-0 w-48 h-48 bg-emerald-800 rounded-full blur-3xl opacity-50 -translate-y-10 translate-x-10">
+          </div>
+
+          <div class="relative z-10">
+            <div class="flex justify-between items-center mb-8">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-900 border border-emerald-700/50 rounded-full">
+                <i data-lucide="shield-check" class="w-4 h-4 text-saffron-400"></i>
+                <span class="text-xs font-bold text-emerald-100 uppercase tracking-wide">Preventive Coach</span>
+              </div>
+            </div>
+
+            <div class="mb-8">
+              <h4 class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">Clinical Insight</h4>
+              <p id="insightText" class="text-emerald-50 text-lg leading-relaxed font-medium">
+                Awaiting meal log... Provide your dietary input above to generate clinical insights.
+              </p>
+            </div>
+
+            <div class="w-full h-px bg-emerald-800/60 mb-8"></div>
+
+            <div>
+              <h4 class="text-xs font-bold text-saffron-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <i data-lucide="lightbulb" class="w-4 h-4"></i> Actionable Tweak
+              </h4>
+              <div class="bg-emerald-900/50 border border-emerald-800/50 rounded-2xl p-5">
+                <p id="recommendationText" class="text-emerald-100 text-sm leading-relaxed">
+                  Dietary interventions will appear here once your current micronutrient vectors are calculated.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Initialize Icons
+    lucide.createIcons();
+
+    // Chart.js Setup (Upgraded to match landing page aesthetic)
+    let chart = new Chart(document.getElementById("nutrientChart"), {
+      type: "radar",
+      data: {
+        labels: ["Iron", "Zinc", "B12", "Folate"],
+        datasets: [{
+          label: 'Current Intake',
+          data: [0, 0, 0, 0],
+          backgroundColor: 'rgba(5, 150, 105, 0.15)', // Emerald transparent
+          borderColor: '#059669', // Emerald
+          borderWidth: 2,
+          pointBackgroundColor: '#ea580c', // Saffron point
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#ea580c',
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            angleLines: { color: 'rgba(0,0,0,0.05)' },
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            pointLabels: {
+              font: { family: 'Inter', size: 12, weight: '600' },
+              color: '#022c22'
+            },
+            ticks: { display: false, min: 0 } // Hide numbers on web, keeps it clean
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // Logout Function
+    function logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userId");
+      window.location.href = "/index.html";
+    }
+
+    // Analyze Meal Logic
+    async function analyzeMeal() {
+      const meal = document.getElementById("mealInput").value;
+      if (!meal.trim()) {
+        alert("Please enter a meal to analyze.");
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+
+      // --- UI Loading State ON ---
+      const btn = document.getElementById("analyzeBtn");
+      const btnIcon = document.getElementById("btnIcon");
+      const btnSpinner = document.getElementById("btnSpinner");
+      const btnText = document.getElementById("btnText");
+
+      btn.disabled = true;
+      btnIcon.classList.add("hidden");
+      btnSpinner.classList.remove("hidden");
+      btnText.innerText = "Extracting Data...";
+
+      try {
+        const res = await fetch("http://localhost:5000/api/nutrition/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ meal })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to analyze meal");
+        }
+
+        // Update Chart Data
+        chart.data.datasets[0].data = [
+          data.iron || 0,
+          data.zinc || 0,
+          data.b12 || 0,
+          data.folate || 0
+        ];
+        chart.update();
+
+        // Update Text
+        document.getElementById("insightText").innerText = data.insight || "Data processed successfully.";
+        document.getElementById("recommendationText").innerText = data.recommendation || "Maintain your current dietary balance.";
+
+      } catch (error) {
+        console.error("Analysis Error:", error);
+        alert(error.message || "Error connecting to AI Engine.");
+      } finally {
+        // --- UI Loading State OFF ---
+        btn.disabled = false;
+        btnIcon.classList.remove("hidden");
+        btnSpinner.classList.add("hidden");
+        btnText.innerText = "Analyze Meal";
+      }
+    }
+  </script>
+
 </body>
+
 </html>
