@@ -1,37 +1,52 @@
-// src/routes/nutrition.js
 const express = require('express');
 const router = express.Router();
 
 const { extractFoodData } = require('../agents/extractor');
-const { calculateDish } = require('../engine/calculator');
+const { getNutrition } = require('../agents/nutritionAgent');
 
 router.post('/analyze', async (req, res) => {
     try {
         const { meal, profile } = req.body;
 
-        // 1. Groq extraction
+        // 1. Agentic Extraction (Groq/LLM)
         const extractedFoods = await extractFoodData(meal);
 
-        // 2. Format for Krish's Engine
-        const formattedIngredients = extractedFoods.map(food => ({
-            name: (food.name || "").replace(/_/g, " "),
-            quantity: food.quantity || 100
-        }));
+        // 2. Fetch Live Data & Calculate Totals Inline
+        const formattedIngredients = [];
+        let mealTotals = {
+            calories: 0, protein: 0, iron: 0, zinc: 0,
+            magnesium: 0, folate: 0, vitaminD: 0
+        };
 
-        // 3. Run Krish's Calculator for Raw Values
-        let mealTotals = calculateDish(formattedIngredients);
-        if (mealTotals.error) {
-            mealTotals = { calories: 0, protein: 0, iron: 0, zinc: 0, magnesium: 0, folate: 0, vitaminD: 0 };
+        for (const food of extractedFoods) {
+            const name = (food.name || "").replace(/_/g, " ");
+            const quantity = food.quantity || 100;
+            const factor = quantity / 100; // e.g., 200g = 2x multiplier
+
+            // 🔥 Get the live, freshly fuzzy-matched data directly from the agent
+            const liveNutritionData = await getNutrition(name);
+            
+            if (liveNutritionData) {
+                mealTotals.calories += (liveNutritionData.calories || 0) * factor;
+                mealTotals.protein += (liveNutritionData.protein || 0) * factor;
+                mealTotals.iron += (liveNutritionData.iron || 0) * factor;
+                mealTotals.zinc += (liveNutritionData.zinc || 0) * factor;
+                mealTotals.magnesium += (liveNutritionData.magnesium || 0) * factor;
+                mealTotals.folate += (liveNutritionData.folate || 0) * factor;
+                mealTotals.vitaminD += (liveNutritionData.vitaminD || 0) * factor;
+            }
+
+            formattedIngredients.push({ name, quantity });
         }
 
-        // 4. Calculate Personal RDA (EXACTLY from ahaarapp3.js)
+        // 3. Calculate Personal RDA
         const weight = Number(profile?.weight) || 65;
         const height = Number(profile?.height) || 170;
         const age = Number(profile?.age) || 25;
         const gender = profile?.gender || "Male";
         const activity = profile?.activity || "Sedentary Lifestyle (0-2 days a week)";
 
-        // --- CALORIES (Mifflin-St Jeor Equation) ---
+        // --- CALORIES ---
         let BMR = gender === "Male"
             ? (10 * weight) + (6.25 * height) - (5 * age) + 5
             : (10 * weight) + (6.25 * height) - (5 * age) - 161;
@@ -48,100 +63,54 @@ router.post('/analyze', async (req, res) => {
         else if (activity.includes("3-5")) pFactor = 1.5;
         let recProtein = weight * pFactor;
 
-        // --- IRON ---
-        let recIron = 8; // default
+        // --- MICROS ---
+        let recIron = 8;
         if (gender === "Male") {
-            if (age < 1) recIron = 11;
-            else if (age <= 3) recIron = 7;
-            else if (age <= 8) recIron = 10;
-            else if (age <= 13) recIron = 8;
-            else if (age <= 18) recIron = 11;
-            else recIron = 8;
+            if (age <= 18) recIron = 11;
         } else {
-            if (age < 1) recIron = 11;
-            else if (age <= 3) recIron = 7;
-            else if (age <= 8) recIron = 10;
-            else if (age <= 13) recIron = 8;
-            else if (age <= 18) recIron = 15;
+            if (age <= 18) recIron = 15;
             else if (age <= 50) recIron = 18;
-            else recIron = 8;
         }
 
-        // --- ZINC ---
-        let recZinc = 8;
-        if (gender === "Male") {
-            if (age < 1) recZinc = 3;
-            else if (age <= 3) recZinc = 3;
-            else if (age <= 8) recZinc = 5;
-            else if (age <= 13) recZinc = 8;
-            else recZinc = 11;
-        } else {
-            if (age < 1) recZinc = 3;
-            else if (age <= 3) recZinc = 3;
-            else if (age <= 8) recZinc = 5;
-            else if (age <= 13) recZinc = 8;
-            else if (age <= 18) recZinc = 9;
-            else recZinc = 8;
-        }
-
-        // --- MAGNESIUM ---
-        let recMagnesium = 400;
-        if (gender === "Male") {
-            if (age < 1) recMagnesium = 75;
-            else if (age <= 3) recMagnesium = 80;
-            else if (age <= 8) recMagnesium = 130;
-            else if (age <= 13) recMagnesium = 240;
-            else if (age <= 18) recMagnesium = 410;
-            else if (age <= 30) recMagnesium = 400;
-            else recMagnesium = 420;
-        } else {
-            if (age < 1) recMagnesium = 75;
-            else if (age <= 3) recMagnesium = 80;
-            else if (age <= 8) recMagnesium = 130;
-            else if (age <= 13) recMagnesium = 240;
-            else if (age <= 18) recMagnesium = 360;
-            else if (age <= 30) recMagnesium = 310;
-            else recMagnesium = 320;
-        }
-
-        // --- FOLATE ---
+        let recZinc = gender === "Male" ? 11 : 8;
+        let recMagnesium = gender === "Male" ? 400 : 310;
         let recFolate = 400;
-        if (age < 1) recFolate = 80;
-        else if (age <= 3) recFolate = 150;
-        else if (age <= 8) recFolate = 200;
-        else if (age <= 13) recFolate = 300;
-        else recFolate = 400;
-
-        // --- VITAMIN D ---
         let recVitaminD = 15;
-        if (age < 1) recVitaminD = 10;
-        else if (age <= 70) recVitaminD = 15;
-        else recVitaminD = 20;
 
-        // 5. Calculate Percentages of RDA (Capped at 100% for the chart, or let it overflow)
+        // 4. Calculate Percentages for the Dashboard Chart
+        // Math.min(100, ...) ensures the radar chart doesn't break boundaries
         const percentages = {
-            calories: Math.round(((mealTotals.calories || 0) / recCalories) * 100),
-            protein: Math.round(((mealTotals.protein || 0) / recProtein) * 100),
-            iron: Math.round(((mealTotals.iron || 0) / recIron) * 100),
-            zinc: Math.round(((mealTotals.zinc || 0) / recZinc) * 100),
-            magnesium: Math.round(((mealTotals.magnesium || 0) / recMagnesium) * 100),
-            folate: Math.round(((mealTotals.folate || 0) / recFolate) * 100),
-            vitaminD: Math.round(((mealTotals.vitaminD || 0) / recVitaminD) * 100)
+            calories: Math.min(100, Math.round(((mealTotals.calories || 0) / recCalories) * 100)),
+            protein: Math.min(100, Math.round(((mealTotals.protein || 0) / recProtein) * 100)),
+            iron: Math.min(100, Math.round(((mealTotals.iron || 0) / recIron) * 100)),
+            zinc: Math.min(100, Math.round(((mealTotals.zinc || 0) / recZinc) * 100)),
+            magnesium: Math.min(100, Math.round(((mealTotals.magnesium || 0) / recMagnesium) * 100)),
+            folate: Math.min(100, Math.round(((mealTotals.folate || 0) / recFolate) * 100)),
+            vitaminD: Math.min(100, Math.round(((mealTotals.vitaminD || 0) / recVitaminD) * 100))
         };
 
         const deficitIron = Math.max(0, recIron - (mealTotals.iron || 0)).toFixed(1);
-        let recommendation = "Your micronutrient vectors look good. Maintain current habits.";
+
+        let recommendation = "Your micronutrient vectors look good.";
         if (deficitIron > 5) {
-            recommendation = `Iron Deficit (${deficitIron}mg missing). Squeeze lemon over your next meal to boost non-heme iron absorption by 30%.`;
+            recommendation = `Iron Deficit (${deficitIron}mg missing). Consider adding vitamin C rich foods to boost absorption.`;
         }
 
-        // 6. Send everything back
+        // 5. Send exact structure expected by dashboard.html
         res.json({
             raw: mealTotals,
-            rda: { calories: recCalories, protein: recProtein, iron: recIron, zinc: recZinc, magnesium: recMagnesium, folate: recFolate, vitaminD: recVitaminD },
-            percentages: percentages,
+            rda: {
+                calories: Math.round(recCalories), 
+                protein: Math.round(recProtein), 
+                iron: recIron,
+                zinc: recZinc, 
+                magnesium: recMagnesium, 
+                folate: recFolate, 
+                vitaminD: recVitaminD
+            },
+            percentages,
             insight: `AI mapped & weighed: ${formattedIngredients.map(f => `${f.quantity}g of ${f.name}`).join(", ")}`,
-            recommendation: recommendation
+            recommendation
         });
 
     } catch (error) {

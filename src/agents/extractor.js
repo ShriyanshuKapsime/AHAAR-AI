@@ -15,16 +15,19 @@ async function extractFoodData(userInput) {
                     Extract food items and ESTIMATE their weight in grams based on standard Indian portion sizes.
 
                     RULES:
-                    1. NORMALIZATION: Convert food names to snake_case (e.g., "Dal Makhani" -> "dal_makhani").
+                    1. NORMALIZATION: Convert the EXACT food names to snake_case (e.g., "Dal Makhani" -> "dal_makhani"). DO NOT add prefixes like "wheat_" or infer specific types unless the user states them. If the user says "roti" or "chapati", output "roti" or "chapati".
                     2. QUANTITY ESTIMATION: You MUST calculate the total estimated weight in grams. 
-                       - 1 standard roti = ~40g. So "3 rotis" = 120g.
-                       - 1 bowl of dal = ~150g.
+                       - 1 standard roti/chapati = ~40g. So "3 rotis" = 120g.
+                       - 1 bowl of dal/sambar = ~150g.
                        - 1 burger = ~200g.
                        - 1 plate of rice = ~200g.
                     3. Output a JSON object with a key "foods" containing an array of objects.
                     
                     Example Input: "I had 2 chapatis and a bowl of dal"
-                    Example Output: {"foods": [{"name": "wheat_roti", "quantity": 80}, {"name": "dal_makhani", "quantity": 150}]}
+                    Example Output: {"foods": [{"name": "chapati", "quantity": 80}, {"name": "dal", "quantity": 150}]}
+                    
+                    Example Input: "2 roti and 1 bowl sambar"
+                    Example Output: {"foods": [{"name": "roti", "quantity": 80}, {"name": "sambar", "quantity": 150}]}
                     
                     Example Input: "I ate 1 burger"
                     Example Output: {"foods": [{"name": "burger", "quantity": 200}]}`
