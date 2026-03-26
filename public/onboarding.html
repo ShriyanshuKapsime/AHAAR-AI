@@ -1,15 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AHAAR — Onboarding</title>
+
+  <title>AHAAR Onboarding</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    body {
+      background: #FAFAFA;
+      font-family: Inter, system-ui;
+      color: #1A1A1A;
+    }
+  </style>
+
 </head>
-<body>
-  <h1>Onboarding</h1>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
+
+<body class="min-h-screen flex items-center justify-center">
+
+  <div class="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-xl">
+
+    <h2 class="text-3xl font-black mb-2 text-center">
+      Clinical Baseline
+    </h2>
+
+    <p class="text-gray-500 text-center mb-8">
+      We need a few details to calculate your personalized micronutrient RDA.
+    </p>
+
+    <form id="onboardingForm" class="space-y-5">
+
+      <input id="name" placeholder="Name" class="w-full border p-3 rounded-xl">
+
+      <div class="grid grid-cols-2 gap-4">
+        <input id="height" placeholder="Height (cm)" class="border p-3 rounded-xl">
+        <input id="weight" placeholder="Weight (kg)" class="border p-3 rounded-xl">
+      </div>
+
+      <input id="age" placeholder="Age" class="w-full border p-3 rounded-xl">
+
+      <select id="gender" class="w-full border p-3 rounded-xl">
+        <option value="">Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Prefer not to say</option>
+      </select>
+
+      <select id="activity" class="w-full border p-3 rounded-xl">
+        <option value="">Activity Level</option>
+        <option>Physically Active (6-7 days a week)</option>
+        <option>Partially Active (3-5 days a week)</option>
+        <option>Sedentary Lifestyle (0-2 days a week)</option>
+      </select>
+
+      <button type="submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold hover:bg-orange-600">
+        Proceed to Tracker →
+      </button>
+
+    </form>
+
+  </div>
+
+  <script>
+
+    const BASE_URL = "http://localhost:5000/api/user"
+
+    document.getElementById("onboardingForm")
+      .addEventListener("submit", async function (e) {
+
+        e.preventDefault()
+
+        const userData = {
+          name: document.getElementById("name").value,
+          height: document.getElementById("height").value,
+          weight: document.getElementById("weight").value,
+          age: document.getElementById("age").value,
+          gender: document.getElementById("gender").value,
+          activity: document.getElementById("activity").value
+        }
+
+        const token = localStorage.getItem("token")
+
+        try {
+
+          const res = await fetch(`${BASE_URL}/onboarding`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(userData)
+          })
+
+          const data = await res.json()
+
+          if (!res.ok) {
+            alert(data.message || "Failed")
+            return
+          }
+
+          alert("Profile Saved")
+
+          window.location.href = "/dashboard.html"
+
+        } catch (err) {
+          console.log(err)
+          alert("Server Error")
+        }
+
+      })
+
+  </script>
+
 </body>
+
 </html>
