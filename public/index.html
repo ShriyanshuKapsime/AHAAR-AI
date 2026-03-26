@@ -1,15 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AHAAR — Clinical Nutrition Support</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AHAAR</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #fafafa, #f3f4f6);
+      font-family: Inter, system-ui;
+      color: #111827;
+    }
+
+    /* premium highlight */
+    .highlight {
+      position: relative;
+      display: inline-block;
+    }
+
+    .highlight::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 6px;
+      width: 100%;
+      height: 12px;
+      background: #fb923c;
+      opacity: .25;
+      z-index: -1;
+      border-radius: 6px;
+    }
+
+    /* glass navbar */
+    .glass {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(14px);
+    }
+
+    /* modal animation */
+    .modal {
+      animation: fade .25s ease;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: scale(.96)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <h1>Welcome to AHAAR</h1>
-  <script src="js/api.js"></script>
-  <script src="js/ui.js"></script>
+
+  <!-- NAVBAR -->
+  <nav class="glass fixed w-full border-b border-gray-200 z-50">
+    <div class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+
+      <h1 class="text-2xl font-extrabold tracking-tight">AHAAR</h1>
+
+      <div class="space-x-5">
+        <button onclick="openLogin()" class="text-gray-600 hover:text-black transition">Login</button>
+
+        <button onclick="openSignup()"
+          class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-xl shadow-sm transition">
+          Get Started
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="min-h-screen flex flex-col justify-center items-center text-center pt-28 px-6">
+
+    <h1 class="text-8xl font-black tracking-tight mb-6">AHAAR</h1>
+
+    <h2 class="text-3xl md:text-4xl mb-10 text-gray-700">
+      Decoding India’s <span class="highlight">Hidden Hunger</span>
+    </h2>
+
+    <button
+      class="bg-orange-500 hover:bg-orange-600 text-white px-12 py-5 rounded-2xl text-lg shadow-xl transition hover:scale-[1.03]">
+      Start Free Clinical Assessment
+    </button>
+
+    <!-- floating product card -->
+    <div class="mt-20 bg-white/90 backdrop-blur shadow-2xl rounded-3xl p-10 w-96 hover:scale-[1.02] transition">
+
+      <p class="text-gray-400 mb-4">Input: Paneer Butter Masala</p>
+
+      <canvas id="chart"></canvas>
+
+    </div>
+
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="max-w-6xl mx-auto grid md:grid-cols-2 gap-24 py-36 px-8" data-aos="fade-up">
+
+    <div class="text-6xl font-black leading-tight tracking-tight">
+      FULL STOMACHS.<br>
+      EMPTY CELLS.
+    </div>
+
+    <div class="border-l-4 border-orange-400 pl-8 text-lg text-gray-700">
+      Standard Indian diets provide enough calories to feel full, but systematically lack the iron, zinc, and B12
+      necessary for cellular health.
+      <br><br>
+      You aren’t starving. You are micro-deficient.
+    </div>
+
+  </section>
+
+  <!-- AI ENGINE -->
+  <section class="bg-gray-100 py-32" data-aos="fade-up">
+
+    <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 px-8">
+
+      <div class="bg-white rounded-3xl p-10 shadow-sm hover:shadow-lg transition">
+        <h3 class="text-5xl text-gray-200 font-black mb-6">01</h3>
+        <h4 class="font-bold mb-3 text-lg">Agentic Extraction</h4>
+        <p class="text-gray-600">Type what you eat naturally. Our AI converts Indian meals into clinical nutrition
+          signals.</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-10 shadow-sm hover:shadow-lg transition">
+        <h3 class="text-5xl text-gray-200 font-black mb-6">02</h3>
+        <h4 class="font-bold mb-3 text-lg">Grounded Indian Data</h4>
+        <p class="text-gray-600">We compute micronutrients using ICMR datasets. Zero Western guesswork.</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-10 shadow-sm hover:shadow-lg transition">
+        <h3 class="text-5xl text-gray-200 font-black mb-6">03</h3>
+        <h4 class="font-bold mb-3 text-lg">Preventive Coach</h4>
+        <p class="text-gray-600">We don’t just show deficits. We help you close them.</p>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="bg-gray-900 text-white text-center py-28">
+
+    <h2 class="text-4xl font-bold mb-8">Stop guessing your health.</h2>
+
+    <button
+      class="bg-orange-500 hover:bg-orange-600 px-12 py-5 rounded-2xl text-lg shadow-lg transition hover:scale-[1.04]">
+      Start Your Clinical Assessment
+    </button>
+
+    <p class="mt-10 text-gray-400 text-sm">
+      Built for IMPACT AI 3.0 Hackathon
+    </p>
+
+  </section>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+
+    <div class="modal bg-white rounded-3xl p-10 w-96 relative">
+
+      <button onclick="closeModal()" class="absolute right-5 top-4 text-gray-400 hover:text-black text-xl">✕</button>
+
+      <h2 class="text-2xl font-bold mb-6">Login</h2>
+
+      <input id="loginEmail" class="border w-full p-3 mb-4 rounded-xl" placeholder="Email">
+
+      <input id="loginPassword" type="password" class="border w-full p-3 mb-6 rounded-xl" placeholder="Password">
+
+      <button onclick="handleLogin()" class="bg-orange-500 text-white w-full py-3 rounded-xl">
+        Login
+      </button>
+
+      <p class="mt-4 text-sm text-center">
+        No account?
+        <span onclick="switchSignup()" class="text-orange-500 cursor-pointer">Sign up</span>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- SIGNUP MODAL -->
+  <div id="signupModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+
+    <div class="modal bg-white rounded-3xl p-10 w-96 relative">
+
+      <button onclick="closeModal()" class="absolute right-5 top-4 text-gray-400 hover:text-black text-xl">✕</button>
+
+      <h2 class="text-2xl font-bold mb-6">Create Account</h2>
+
+      <input id="signupName" class="border w-full p-3 mb-4 rounded-xl" placeholder="Name">
+
+      <input id="signupEmail" class="border w-full p-3 mb-4 rounded-xl" placeholder="Email">
+
+      <input id="signupPassword" type="password" class="border w-full p-3 mb-6 rounded-xl" placeholder="Password">
+
+      <button onclick="handleSignup()" class="bg-orange-500 text-white w-full py-3 rounded-xl">
+        Sign Up
+      </button>
+
+      <p class="mt-4 text-sm text-center">
+        Already have account?
+        <span onclick="switchLogin()" class="text-orange-500 cursor-pointer">Login</span>
+      </p>
+
+    </div>
+  </div>
+
+  <script>
+
+    new Chart(document.getElementById('chart'), {
+      type: 'radar',
+      data: {
+        labels: ['Iron', 'Zinc', 'B12', 'Folate'],
+        datasets: [{
+          data: [4, 3, 2, 5],
+          backgroundColor: 'rgba(249,115,22,.2)',
+          borderColor: '#f97316',
+          borderWidth: 2
+        }]
+      }
+    })
+
+    function openLogin() {
+      document.getElementById("loginModal").classList.remove("hidden")
+    }
+
+    function openSignup() {
+      document.getElementById("signupModal").classList.remove("hidden")
+    }
+
+    function closeModal() {
+      document.getElementById("loginModal").classList.add("hidden")
+      document.getElementById("signupModal").classList.add("hidden")
+    }
+
+    function switchSignup() {
+      closeModal()
+      openSignup()
+    }
+
+    function switchLogin() {
+      closeModal()
+      openLogin()
+    }
+    const BASE_URL = "http://localhost:5000/api/auth"
+
+    /* ---------------- SIGNUP ---------------- */
+
+    async function handleSignup() {
+
+      const name = document.getElementById("signupName").value
+      const email = document.getElementById("signupEmail").value
+      const password = document.getElementById("signupPassword").value
+
+      try {
+
+        const res = await fetch(`${BASE_URL}/signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password
+          })
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          alert(data.message || "Signup Failed")
+          return
+        }
+
+        alert("Signup Successful")
+
+        closeModal()
+
+      } catch (err) {
+        console.log(err)
+        alert("Server Error")
+      }
+
+    }
+
+
+    /* ---------------- LOGIN ---------------- */
+
+    async function handleLogin() {
+
+      const email = document.getElementById("loginEmail").value
+      const password = document.getElementById("loginPassword").value
+
+      try {
+
+        const res = await fetch(`${BASE_URL}/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email,
+            password
+          })
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          alert(data.message || "Login Failed")
+          return
+        }
+
+        /* ⭐ STORE TOKEN */
+        localStorage.setItem("token", data.token)
+
+        /* ⭐ REDIRECT */
+        window.location.href = "/dashboard.html"
+
+      } catch (err) {
+        console.log(err)
+        alert("Server Error")
+      }
+
+    }
+  </script>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+
 </body>
+
 </html>
