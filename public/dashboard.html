@@ -1,326 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AHAAR — Clinical Dashboard</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
-    rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['Playfair Display', 'serif'],
-          },
-          colors: {
-            cream: '#FAFAF7',
-            emerald: {
-              950: '#022c22',
-              900: '#064e3b',
-              800: '#065f46',
-              600: '#059669',
-              50: '#ecfdf5'
-            },
-            saffron: {
-              500: '#f97316',
-              600: '#ea580c',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'] },
+        colors: { cream: '#FAFAF7', emerald: { 950: '#022c22', 900: '#064e3b', 800: '#065f46', 600: '#059669', 50: '#ecfdf5' }, saffron: { 500: '#f97316', 400: '#fb923c' } }
+      }}
+    }
+  </script>
   <style>
-    body {
-      background-color: #FAFAF7;
-      color: #022c22;
-    }
-
-    .glass-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 8px 32px 0 rgba(2, 44, 34, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-    }
-
-    /* AI Prompt Glow */
-    .ai-input-glow:focus-within {
-      box-shadow: 0 0 25px rgba(5, 150, 105, 0.15);
-      border-color: #059669;
-    }
-
-    /* Subtle background grid */
-    .bg-grid {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-size: 40px 40px;
-      background-image:
-        linear-gradient(to right, rgba(2, 44, 34, 0.04) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(2, 44, 34, 0.04) 1px, transparent 1px);
-      z-index: -1;
-      pointer-events: none;
-    }
+    body { background-color: #FAFAF7; color: #022c22; }
+    .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); box-shadow: 0 8px 32px 0 rgba(2, 44, 34, 0.05); }
+    .ai-input-glow:focus-within { box-shadow: 0 0 25px rgba(5, 150, 105, 0.15); border-color: #059669; }
+    .bg-grid { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-size: 40px 40px; background-image: linear-gradient(to right, rgba(2, 44, 34, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(2, 44, 34, 0.04) 1px, transparent 1px); z-index: -1; pointer-events: none; }
+    
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin-slow 2s linear infinite; }
   </style>
 </head>
 
-<body class="antialiased selection:bg-emerald-100 selection:text-emerald-900 min-h-screen flex flex-col">
-
+<body class="antialiased selection:bg-emerald-100 min-h-screen flex flex-col">
   <div class="bg-grid"></div>
 
   <nav class="sticky top-0 z-50 border-b border-stone-200/60 bg-cream/80 backdrop-blur-md">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-emerald-950 flex items-center justify-center shadow-sm">
-          <i data-lucide="leaf" class="w-4.5 h-4.5 text-white"></i>
-        </div>
+        <div class="w-9 h-9 rounded-xl bg-emerald-950 flex items-center justify-center"><i data-lucide="leaf" class="w-4.5 h-4.5 text-white"></i></div>
         <span class="text-lg font-bold text-emerald-950 tracking-tight">ahaar</span>
       </div>
-      <div class="flex items-center gap-4">
-        <div
-          class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/60 rounded-full">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span class="text-xs font-semibold text-emerald-700 tracking-wide">ICMR-NIN Pipeline Active</span>
-        </div>
-        <button onclick="logout()"
-          class="text-sm font-medium text-stone-500 hover:text-emerald-950 transition-colors flex items-center gap-1.5 bg-white/50 px-3 py-1.5 rounded-lg border border-stone-200/60">
-          <i data-lucide="log-out" class="w-4 h-4"></i>
-        </button>
-      </div>
+      <button onclick="logout()" class="text-sm font-medium text-stone-500 hover:text-emerald-950 transition-colors flex items-center gap-1.5 bg-white/50 px-3 py-1.5 rounded-lg border border-stone-200/60">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+      </button>
     </div>
   </nav>
 
   <main class="flex-grow p-6 md:p-10">
     <div class="max-w-5xl mx-auto space-y-8">
-
       <header>
         <h1 class="font-serif text-3xl md:text-4xl font-bold text-emerald-950 mb-2">Today's Clinical Status</h1>
-        <p class="text-stone-500">Log your meals naturally to update your micronutrient vectors.</p>
+        <p class="text-stone-500 font-medium">Log your meals naturally to update your micronutrient vectors.</p>
       </header>
 
-      <div
-        class="bg-white rounded-[2rem] p-2 border border-stone-200/80 shadow-sm ai-input-glow transition-all duration-300">
+      <div class="bg-white rounded-[2rem] p-2 border border-stone-200/80 shadow-sm ai-input-glow transition-all duration-300">
         <div class="relative">
           <i data-lucide="bot" class="absolute left-6 top-6 w-6 h-6 text-emerald-600"></i>
-          <textarea id="mealInput" rows="2"
-            placeholder="What did you eat today? (e.g., 'I had 2 rotis, a bowl of dal makhani, and maggi')"
-            class="w-full bg-transparent resize-none text-emerald-950 text-lg md:text-xl pl-16 pr-6 py-6 focus:outline-none placeholder:text-stone-300 placeholder:font-light font-medium"></textarea>
-
+          <textarea id="mealInput" rows="2" placeholder="e.g., '2 roti and 1 bowl sambar'" class="w-full bg-transparent resize-none text-emerald-950 text-xl pl-16 pr-6 py-6 focus:outline-none font-medium placeholder:text-stone-300"></textarea>
           <div class="flex justify-between items-center px-6 pb-4 pt-2 border-t border-stone-50">
-            <div class="flex items-center gap-2 text-xs text-stone-400 font-medium tracking-wide uppercase">
-              <i data-lucide="brain-circuit" class="w-4 h-4"></i> Agentic NLP Extractor
-            </div>
-
-            <button id="analyzeBtn" onclick="analyzeMeal()"
-              class="relative group overflow-hidden rounded-xl shadow-[0_0_15px_rgba(5,150,105,0.2)] transition-all hover:shadow-[0_0_25px_rgba(5,150,105,0.4)] hover:-translate-y-0.5">
-              <div
-                class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500 group-hover:scale-105 transition-transform duration-500">
-              </div>
-              <div
-                class="relative bg-transparent text-white text-sm font-bold px-6 py-3 flex justify-center items-center gap-2 tracking-wide">
-                <i id="btnIcon" data-lucide="sparkles" class="w-4 h-4 text-emerald-100"></i>
-                <i id="btnSpinner" data-lucide="loader-2" class="w-4 h-4 text-emerald-100 animate-spin hidden"></i>
-                <span id="btnText">Analyze Meal</span>
-              </div>
+            <div class="flex items-center gap-2 text-xs text-stone-400 font-bold uppercase tracking-wider"><i data-lucide="brain-circuit" class="w-4 h-4"></i> Agentic Extractor</div>
+            <button id="analyzeBtn" onclick="analyzeMeal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all active:scale-95">
+              <i id="btnIcon" data-lucide="sparkles" class="w-4 h-4"></i>
+              <span id="btnText">Analyze Meal</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div class="grid lg:grid-cols-2 gap-8 items-start">
-
-        <div class="glass-card rounded-[2rem] p-8">
-          <div class="flex justify-between items-center mb-6 pb-4 border-b border-stone-100">
-            <h3 class="font-bold text-lg text-emerald-950 flex items-center gap-2">
-              <i data-lucide="activity" class="w-5 h-5 text-saffron-500"></i> RDA Delivery
-            </h3>
-            <span class="text-xs font-bold uppercase tracking-widest text-stone-400">Live Data</span>
-          </div>
+      <div class="grid lg:grid-cols-2 gap-8 items-stretch">
+        <div class="glass-card rounded-[2rem] p-8 flex flex-col">
+          <h3 class="font-bold text-lg text-emerald-950 mb-6 flex items-center gap-2 border-b border-stone-100 pb-4">
+            <i data-lucide="activity" class="w-5 h-5 text-saffron-500"></i> RDA Delivery
+          </h3>
           <div class="relative w-full aspect-square max-h-[350px] mx-auto flex justify-center items-center">
             <canvas id="nutrientChart"></canvas>
           </div>
         </div>
 
-        <div class="bg-emerald-950 rounded-[2rem] p-8 shadow-xl relative overflow-hidden h-full">
-          <div
-            class="absolute top-0 right-0 w-48 h-48 bg-emerald-800 rounded-full blur-3xl opacity-50 -translate-y-10 translate-x-10">
-          </div>
-
-          <div class="relative z-10">
-            <div class="flex justify-between items-center mb-8">
-              <div
-                class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-900 border border-emerald-700/50 rounded-full">
-                <i data-lucide="shield-check" class="w-4 h-4 text-saffron-400"></i>
-                <span class="text-xs font-bold text-emerald-100 uppercase tracking-wide">Preventive Coach</span>
-              </div>
+        <div class="bg-emerald-950 rounded-[2rem] p-8 shadow-xl relative overflow-hidden flex flex-col">
+          <div class="relative z-10 space-y-8">
+            <div>
+              <h4 class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">Clinical Insight (Symptoms)</h4>
+              <p id="insightText" class="text-emerald-50 text-lg leading-relaxed font-medium">Awaiting meal log...</p>
             </div>
 
-            <div class="mb-8">
-              <h4 class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">Clinical Insight</h4>
-              <p id="insightText" class="text-emerald-50 text-lg leading-relaxed font-medium">
-                Awaiting meal log... Provide your dietary input above to generate clinical insights.
-              </p>
-            </div>
-
-            <div class="w-full h-px bg-emerald-800/60 mb-8"></div>
+            <div class="w-full h-px bg-emerald-800/60"></div>
 
             <div>
               <h4 class="text-xs font-bold text-saffron-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                 <i data-lucide="lightbulb" class="w-4 h-4"></i> Actionable Tweak
               </h4>
-              <div class="bg-emerald-900/50 border border-emerald-800/50 rounded-2xl p-5">
-                <p id="recommendationText" class="text-emerald-100 text-sm leading-relaxed">
-                  Dietary interventions will appear here once your current micronutrient vectors are calculated.
-                </p>
+              <div id="recommendationCard" onclick="toggleRecommendation()" class="bg-emerald-900/40 border border-emerald-800/50 rounded-2xl p-5 cursor-pointer hover:bg-emerald-900/60 transition-all group">
+                <div class="flex justify-between items-start gap-4">
+                  <p id="recommendationShort" class="text-emerald-100 text-sm leading-relaxed font-medium">Dietary interventions will appear here...</p>
+                  <i id="expandIcon" data-lucide="chevron-down" class="w-5 h-5 text-emerald-500 transition-transform"></i>
+                </div>
+                <div id="recommendationDetails" class="hidden mt-4 pt-4 border-t border-emerald-800/50 space-y-4">
+                  <div id="deficiencyList" class="space-y-3"></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
+
+      <section id="mealPlanSection" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-serif text-2xl md:text-3xl font-bold text-emerald-950">Tomorrow's Recovery Plan</h2>
+          <button id="retryBtn" onclick="retryMealPlan()" class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-all">
+            <i id="retryIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Shuffle Plan
+          </button>
+        </div>
+        <div id="mealCards" class="grid md:grid-cols-3 gap-6">
+          </div>
+      </section>
+
     </div>
   </main>
 
   <script>
-    // Initialize Icons
     lucide.createIcons();
+    let currentGaps = [];
 
-    // Chart.js Setup - LOCKED TO 100%
+    // Radar Chart Logic
     let chart = new Chart(document.getElementById("nutrientChart"), {
       type: "radar",
       data: {
         labels: ["Protein", "Iron", "Zinc", "Magnesium", "Folate", "Vit D", "Calories"],
         datasets: [{
-          label: '% of Daily RDA',
           data: [0, 0, 0, 0, 0, 0, 0],
           backgroundColor: 'rgba(5, 150, 105, 0.25)',
           borderColor: '#059669',
           borderWidth: 2,
           pointBackgroundColor: '#ea580c',
           pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: '#ea580c',
-          pointRadius: 4,
-          pointHoverRadius: 6
+          pointRadius: 4
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          r: {
-            min: 0,
-            max: 100, // Locks the outer ring to 100%
-            angleLines: { color: 'rgba(0,0,0,0.1)' },
-            grid: { color: 'rgba(0,0,0,0.1)' },
-            pointLabels: {
-              font: { family: 'Inter', size: 12, weight: '600' },
-              color: '#022c22'
-            },
-            ticks: {
-              display: false, // Hides the numbers on the rings
-              stepSize: 25
-            }
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return context.raw + '% of Daily Goal';
-              }
-            }
-          }
-        }
+      options: { 
+        scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { font: { family: 'Inter', size: 12, weight: '600' }, color: '#022c22' } } },
+        plugins: { legend: { display: false } }
       }
     });
 
-    function logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userData");
-      window.location.href = "/index.html";
+    function toggleRecommendation() {
+      const details = document.getElementById("recommendationDetails");
+      const icon = document.getElementById("expandIcon");
+      const isHidden = details.classList.toggle("hidden");
+      icon.style.transform = isHidden ? "rotate(0deg)" : "rotate(180deg)";
     }
 
     async function analyzeMeal() {
       const meal = document.getElementById("mealInput").value;
-      if (!meal.trim()) return alert("Please enter a meal to analyze.");
+      if (!meal.trim()) return;
 
-      const token = localStorage.getItem("token");
-
-      // Grab the user data saved during Onboarding
-      let userProfile = { gender: "Male", weight: 65, age: 25, activity: "Sedentary Lifestyle (0-2 days a week)" };
-      const savedData = localStorage.getItem("userData");
-      if (savedData) {
-        try { userProfile = JSON.parse(savedData); } catch (e) { }
-      }
-
-      // UI Loading State
       const btn = document.getElementById("analyzeBtn");
-      document.getElementById("btnIcon").classList.add("hidden");
-      document.getElementById("btnSpinner").classList.remove("hidden");
       document.getElementById("btnText").innerText = "Extracting...";
+      document.getElementById("btnIcon").classList.add("hidden");
 
       try {
+        const token = localStorage.getItem("token");
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+
         const res = await fetch("http://localhost:5000/api/nutrition/analyze", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          // Send BOTH the meal and the profile
-          body: JSON.stringify({ meal: meal, profile: userProfile })
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ meal, profile: userData })
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to analyze meal");
+        currentGaps = data.lowNutrients; // Store for retry
 
-        // Update Chart Data with PERCENTAGES (including Calories!)
+        // 1. Update Chart
         chart.data.datasets[0].data = [
-          data.percentages.protein || 0,
-          data.percentages.iron || 0,
-          data.percentages.zinc || 0,
-          data.percentages.magnesium || 0,
-          data.percentages.folate || 0,
-          data.percentages.vitaminD || 0,
-          data.percentages.calories || 0
+          data.percentages.protein, data.percentages.iron, data.percentages.zinc,
+          data.percentages.magnesium, data.percentages.folate, data.percentages.vitaminD, data.percentages.calories
         ];
         chart.update();
 
-        // Update Text
+        // 2. Update Symptoms and Tweaks
         document.getElementById("insightText").innerText = data.insight;
-        document.getElementById("recommendationText").innerText = data.recommendation;
+        document.getElementById("recommendationShort").innerText = data.recommendation.short;
+        
+        const list = document.getElementById("deficiencyList");
+        list.innerHTML = data.recommendation.details.map(item => `
+          <div class="p-3 bg-emerald-950/50 rounded-xl border border-emerald-800/30">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] font-bold text-saffron-400 uppercase tracking-tighter">${item.nutrient} Boost</span>
+            </div>
+            <p class="text-sm font-bold text-emerald-50">${item.suggestion}</p>
+            <p class="text-[11px] text-emerald-400 italic mt-1">${item.reason}</p>
+          </div>
+        `).join('');
 
-      } catch (error) {
-        console.error("Analysis Error:", error);
-        alert(error.message);
+        // 3. Render Tomorrow's Plan
+        document.getElementById("mealPlanSection").classList.remove("hidden");
+        renderMealPlan(data.mealPlan);
+
+      } catch (e) {
+        console.error(e);
+        alert("Failed to analyze meal.");
       } finally {
-        // UI Reset
-        document.getElementById("btnIcon").classList.remove("hidden");
-        document.getElementById("btnSpinner").classList.add("hidden");
         document.getElementById("btnText").innerText = "Analyze Meal";
+        document.getElementById("btnIcon").classList.remove("hidden");
+        lucide.createIcons();
       }
     }
+
+    function renderMealPlan(meals) {
+      const container = document.getElementById("mealCards");
+      container.innerHTML = meals.map(m => `
+        <div class="bg-white border border-stone-200 rounded-[2rem] p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center gap-2 mb-4">
+             <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">${m.type}</span>
+          </div>
+          <h5 class="font-bold text-emerald-950 text-lg mb-2">${m.dish}</h5>
+          <p class="text-stone-500 text-xs leading-relaxed font-medium">${m.benefit}</p>
+        </div>
+      `).join('');
+    }
+
+    async function retryMealPlan() {
+      const icon = document.getElementById("retryIcon");
+      icon.classList.add("animate-spin-slow");
+
+      try {
+        const res = await fetch("http://localhost:5000/api/nutrition/regen-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lowNutrients: currentGaps })
+        });
+        const data = await res.json();
+        renderMealPlan(data.mealPlan);
+      } catch (e) { console.error(e); }
+      
+      setTimeout(() => icon.classList.remove("animate-spin-slow"), 800);
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "/index.html";
+    }
   </script>
-
 </body>
-
 </html>
