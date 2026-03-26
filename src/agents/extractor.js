@@ -1,49 +1,58 @@
 // src/agents/extractor.js
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require("groq-sdk");
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function extractFoodData(userInput) {
-    const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        generationConfig: { responseMimeType: "application/json" }
+  console.log(`🧠 [Groq Agent] Analyzing: "${userInput}"`);
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: `You are a clinical data extraction AI for an Indian nutrition app. 
+                    Extract food items and ESTIMATE their weight in grams based on standard Indian portion sizes.
+
+                    RULES:
+                    1. NORMALIZATION: Convert food names to snake_case (e.g., "Dal Makhani" -> "dal_makhani").
+                    2. QUANTITY ESTIMATION: You MUST calculate the total estimated weight in grams. 
+                       - 1 standard roti = ~40g. So "3 rotis" = 120g.
+                       - 1 bowl of dal = ~150g.
+                       - 1 burger = ~200g.
+                       - 1 plate of rice = ~200g.
+                    3. Output a JSON object with a key "foods" containing an array of objects.
+                    
+                    Example Input: "I had 2 chapatis and a bowl of dal"
+                    Example Output: {"foods": [{"name": "wheat_roti", "quantity": 80}, {"name": "dal_makhani", "quantity": 150}]}
+                    
+                    Example Input: "I ate 1 burger"
+                    Example Output: {"foods": [{"name": "burger", "quantity": 200}]}`
+        },
+        { role: "user", content: userInput }
+      ],
+      model: "llama-3.1-8b-instant",
+      temperature: 0.0,
+      response_format: { type: "json_object" }
     });
 
-    const prompt = `
-    You are an advanced clinical data extraction AI for an Indian nutrition app.
-    User Input: "${userInput}"
+    const responseText = chatCompletion.choices[0]?.message?.content;
 
-    Extract every food item mentioned and break it down into three specific data points.
-    1. dish_name: Normalize to standard English/Hindi (e.g., "rotis" -> "wheat roti").
-    2. quantity: The weight, volume, or count (e.g., "200g", "2 pieces", "1 bowl"). If not mentioned, output "unknown".
-    3. cooking_method: How it was cooked (e.g., "fried", "boiled", "roasted", "raw"). Infer from the dish name if obvious (e.g., "paneer tikka" -> "grilled/roasted", "salad" -> "raw"). If completely unknown, output "standard".
-    
-    Output ONLY a valid JSON array of objects. No markdown, no explanations.
-    
-    Example Output:
-    [
-      {
-        "dish_name": "wheat roti",
-        "quantity": "2 pieces",
-        "cooking_method": "roasted"
-      },
-      {
-        "dish_name": "dal makhani",
-        "quantity": "1 bowl",
-        "cooking_method": "boiled/simmered"
-      }
-    ]
-    `;
-
+    let extractedFoods = [];
     try {
-        const result = await model.generateContent(prompt);
-        const extractedFoods = JSON.parse(result.response.text());
-        return extractedFoods;
-    } catch (error) {
-        console.error("🚨 NLP Extraction Failed:", error.message);
-        return [];
+      const parsed = JSON.parse(responseText);
+      extractedFoods = parsed.foods || Object.values(parsed)[0] || [];
+    } catch (e) {
+      console.error("Failed to parse Groq JSON:", responseText);
     }
+
+    console.log("✅ Groq Extracted & Weighed:", extractedFoods);
+    return extractedFoods;
+
+  } catch (error) {
+    console.error("🚨 Groq Extraction Failed:", error.message);
+    return [];
+  }
 }
 
-module.exports = { extractFoodData };   
+module.exports = { extractFoodData };

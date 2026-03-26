@@ -14,21 +14,23 @@ function safeNumber(value) {
 
 const FOOD_MAP = {};
 
+// src/engine/calculator.js
 for (let item of rawData) {
   const name = normalize(item.food_name);
   if (!name) continue;
 
+  // STRICT MAPPING: Only pull the 100g clinical baseline
   FOOD_MAP[name] = {
     originalName: item.food_name,
     nutrients: {
-      calories: safeNumber(item.energy_kcal),
-      protein: safeNumber(item.protein_g),
-      iron: safeNumber(item.iron_mg),
-      zinc: safeNumber(item.zinc_mg),
-      magnesium: safeNumber(item.magnesium_mg),
-      folate: safeNumber(item.folate_ug || item.vitb9_ug),
-      vitaminD:
-        safeNumber(item.vitd2_ug) + safeNumber(item.vitd3_ug)
+      // Use Number() to ensure we aren't getting string concatenation
+      calories: Number(item.energy_kcal || 0),
+      protein: Number(item.protein_g || 0),
+      iron: Number(item.iron_mg || 0),
+      zinc: Number(item.zinc_mg || 0),
+      magnesium: Number(item.magnesium_mg || 0),
+      folate: Number(item.folate_ug || item.vitb9_ug || 0),
+      vitaminD: Number(item.vitd2_ug || 0) + Number(item.vitd3_ug || 0)
     }
   };
 }

@@ -203,18 +203,18 @@
     // Initialize Icons
     lucide.createIcons();
 
-    // Chart.js Setup (Upgraded to match landing page aesthetic)
+    // Chart.js Setup - LOCKED TO 100%
     let chart = new Chart(document.getElementById("nutrientChart"), {
       type: "radar",
       data: {
-        labels: ["Iron", "Zinc", "B12", "Folate"],
+        labels: ["Protein", "Iron", "Zinc", "Magnesium", "Folate", "Vit D", "Calories"],
         datasets: [{
-          label: 'Current Intake',
-          data: [0, 0, 0, 0],
-          backgroundColor: 'rgba(5, 150, 105, 0.15)', // Emerald transparent
-          borderColor: '#059669', // Emerald
+          label: '% of Daily RDA',
+          data: [0, 0, 0, 0, 0, 0, 0],
+          backgroundColor: 'rgba(5, 150, 105, 0.25)',
+          borderColor: '#059669',
           borderWidth: 2,
-          pointBackgroundColor: '#ea580c', // Saffron point
+          pointBackgroundColor: '#ea580c',
           pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff',
           pointHoverBorderColor: '#ea580c',
@@ -227,46 +227,57 @@
         maintainAspectRatio: false,
         scales: {
           r: {
-            angleLines: { color: 'rgba(0,0,0,0.05)' },
-            grid: { color: 'rgba(0,0,0,0.05)' },
+            min: 0,
+            max: 100, // Locks the outer ring to 100%
+            angleLines: { color: 'rgba(0,0,0,0.1)' },
+            grid: { color: 'rgba(0,0,0,0.1)' },
             pointLabels: {
               font: { family: 'Inter', size: 12, weight: '600' },
               color: '#022c22'
             },
-            ticks: { display: false, min: 0 } // Hide numbers on web, keeps it clean
+            ticks: {
+              display: false, // Hides the numbers on the rings
+              stepSize: 25
+            }
           }
         },
-        plugins: { legend: { display: false } }
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return context.raw + '% of Daily Goal';
+              }
+            }
+          }
+        }
       }
     });
 
-    // Logout Function
     function logout() {
       localStorage.removeItem("token");
-      localStorage.removeItem("userId");
+      localStorage.removeItem("userData");
       window.location.href = "/index.html";
     }
 
-    // Analyze Meal Logic
     async function analyzeMeal() {
       const meal = document.getElementById("mealInput").value;
-      if (!meal.trim()) {
-        alert("Please enter a meal to analyze.");
-        return;
-      }
+      if (!meal.trim()) return alert("Please enter a meal to analyze.");
 
       const token = localStorage.getItem("token");
 
-      // --- UI Loading State ON ---
-      const btn = document.getElementById("analyzeBtn");
-      const btnIcon = document.getElementById("btnIcon");
-      const btnSpinner = document.getElementById("btnSpinner");
-      const btnText = document.getElementById("btnText");
+      // Grab the user data saved during Onboarding
+      let userProfile = { gender: "Male", weight: 65, age: 25, activity: "Sedentary Lifestyle (0-2 days a week)" };
+      const savedData = localStorage.getItem("userData");
+      if (savedData) {
+        try { userProfile = JSON.parse(savedData); } catch (e) { }
+      }
 
-      btn.disabled = true;
-      btnIcon.classList.add("hidden");
-      btnSpinner.classList.remove("hidden");
-      btnText.innerText = "Extracting Data...";
+      // UI Loading State
+      const btn = document.getElementById("analyzeBtn");
+      document.getElementById("btnIcon").classList.add("hidden");
+      document.getElementById("btnSpinner").classList.remove("hidden");
+      document.getElementById("btnText").innerText = "Extracting...";
 
       try {
         const res = await fetch("http://localhost:5000/api/nutrition/analyze", {
@@ -275,37 +286,37 @@
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify({ meal })
+          // Send BOTH the meal and the profile
+          body: JSON.stringify({ meal: meal, profile: userProfile })
         });
 
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to analyze meal");
 
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to analyze meal");
-        }
-
-        // Update Chart Data
+        // Update Chart Data with PERCENTAGES (including Calories!)
         chart.data.datasets[0].data = [
-          data.iron || 0,
-          data.zinc || 0,
-          data.b12 || 0,
-          data.folate || 0
+          data.percentages.protein || 0,
+          data.percentages.iron || 0,
+          data.percentages.zinc || 0,
+          data.percentages.magnesium || 0,
+          data.percentages.folate || 0,
+          data.percentages.vitaminD || 0,
+          data.percentages.calories || 0
         ];
         chart.update();
 
         // Update Text
-        document.getElementById("insightText").innerText = data.insight || "Data processed successfully.";
-        document.getElementById("recommendationText").innerText = data.recommendation || "Maintain your current dietary balance.";
+        document.getElementById("insightText").innerText = data.insight;
+        document.getElementById("recommendationText").innerText = data.recommendation;
 
       } catch (error) {
         console.error("Analysis Error:", error);
-        alert(error.message || "Error connecting to AI Engine.");
+        alert(error.message);
       } finally {
-        // --- UI Loading State OFF ---
-        btn.disabled = false;
-        btnIcon.classList.remove("hidden");
-        btnSpinner.classList.add("hidden");
-        btnText.innerText = "Analyze Meal";
+        // UI Reset
+        document.getElementById("btnIcon").classList.remove("hidden");
+        document.getElementById("btnSpinner").classList.add("hidden");
+        document.getElementById("btnText").innerText = "Analyze Meal";
       }
     }
   </script>
