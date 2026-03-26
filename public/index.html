@@ -465,11 +465,15 @@
           return;
         }
 
-        /* ⭐ STORE ID (Updated to match your auth.js route which returns userId) */
+        /* ⭐ STORE ID */
         localStorage.setItem("token", data.token);
 
-        /* ⭐ REDIRECT */
-        window.location.href = "/onboarding.html";
+        /* ⭐ REDIRECT BASED ON PROFILE EXISTENCE */
+        if (data.hasProfile) {
+            window.location.href = "/dashboard.html";
+        } else {
+            window.location.href = "/onboarding.html";
+        }
 
       } catch (err) {
         console.log(err);

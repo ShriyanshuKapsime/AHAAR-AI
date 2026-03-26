@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const UserProfile = require("../models/UserProfile");
 
 const SECRET = process.env.JWT_SECRET || "secret";
 
@@ -23,7 +24,8 @@ router.post("/signup", async (req, res) => {
       expiresIn: "7d"
     });
 
-    res.json({ token });
+    // ADDED: New users definitely don't have a profile yet
+    res.json({ token, hasProfile: false });
 
   } catch (err) {
     console.error(err);
@@ -46,7 +48,12 @@ router.post("/login", async (req, res) => {
       expiresIn: "7d"
     });
 
-    res.json({ token });
+    // ADDED: Check if the user has a profile in the database
+    const profile = await UserProfile.findOne({ userId: user._id });
+    const hasProfile = !!profile; // Converts to true if found, false if not
+
+    // Return both the token and the profile status
+    res.json({ token, hasProfile });
 
   } catch (err) {
     console.error(err);
