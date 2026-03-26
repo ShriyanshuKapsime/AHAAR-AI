@@ -1,8 +1,3 @@
-// ============================================
-// AHAAR — Clinical Decision Support System
-// Base Express Server
-// ============================================
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -11,33 +6,22 @@ require('dotenv').config();
 
 const app = express();
 
-// ── Middleware ────────────────────────────────
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// ── Serve Static Frontend ────────────────────
+// Static
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Routes ───────────────────────────────────
-// TODO: Mount API routes here
-// const apiRoutes = require('./src/routes/api');
-// app.use('/api', apiRoutes);
+// Routes
+app.use('/api/auth', require('./src/routes/auth'));
+app.use('/api', require('./src/routes/api'));
+app.use('/api/user', require('./src/routes/user'));
 
-// ── MongoDB Connection ───────────────────────
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ahaar';
+// DB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ahaar')
+  .then(() => console.log("DB connected"))
+  .catch(err => console.error(err));
 
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
-  });
-
-// ── Start Server ─────────────────────────────
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 AHAAR server running on http://localhost:${PORT}`);
-});
+// Server
+app.listen(5000, () => console.log("Server running on 5000"));
