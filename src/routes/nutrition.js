@@ -67,11 +67,20 @@ router.post('/analyze', async (req, res) => {
         const smartRecommendation = await getSmartSuggestions(meal, lowNutrients);
         const mealPlan = await getTomorrowMealPlan(lowNutrients);
 
-        res.json({
+       res.json({
             raw: mealTotals,
             percentages,
-            rda,
-            insight: smartRecommendation.symptoms, // 🔥 This maps to the clinical insight box
+            // 🔥 THE FIX: Group your 'rec' variables into the exact RDA object the frontend needs!
+            rda: {
+                calories: Math.round(recCalories),
+                protein: Math.round(recProtein),
+                iron: recIron,
+                zinc: recZinc,
+                magnesium: recMagnesium,
+                folate: recFolate,
+                vitaminD: recVitaminD
+            },
+            insight: smartRecommendation.symptoms, 
             recommendation: smartRecommendation,
             mealPlan: mealPlan.meals,
             lowNutrients
