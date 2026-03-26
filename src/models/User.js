@@ -1,11 +1,9 @@
-// ============================================
-// AHAAR — User Model (Shell)
-// ============================================
+const mongoose = require("mongoose");
 
-const mongoose = require('mongoose');
+const UserSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  password: String
+});
 
-const userSchema = new mongoose.Schema({
-  // TODO: Define user schema fields
-}, { timestamps: true });
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", UserSchema);
