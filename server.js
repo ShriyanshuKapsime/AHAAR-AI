@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api', require('./src/routes/api'));
+app.use('/api/user', require('./src/routes/user'));
 
 // DB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ahaar')

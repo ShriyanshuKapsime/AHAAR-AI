@@ -9,9 +9,8 @@ router.post("/onboarding", auth, async (req, res) => {
     await UserProfile.findOneAndUpdate(
       { userId: req.user.id },
       req.body,
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
-
     res.json({ message: "Saved" });
 
   } catch (err) {
