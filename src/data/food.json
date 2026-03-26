@@ -85290,5 +85290,15 @@
     "iron": "0.5mg",
     "folate": "10mcg",
     "vitaminD": "0mcg"
+  },
+  {
+    "name": "daal",
+    "calories": 364,
+    "protein": 19.2,
+    "zinc": 2.5,
+    "magnesium": 157,
+    "iron": 3.9,
+    "folate": 134,
+    "vitaminD": 0
   }
 ]
