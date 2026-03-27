@@ -238,7 +238,7 @@
         // 🛡️ DYNAMIC PROFILE: Pull exactly what you set in onboarding.html
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-        const res = await fetch("http://localhost:5000/api/nutrition/analyze", {
+        const res = await fetch("/api/nutrition/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ meal, profile: userData })
@@ -306,7 +306,7 @@
         const meal = document.getElementById("mealInput").value || "";
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-        const res = await fetch("http://localhost:5000/api/nutrition/regen-plan", {
+        const res = await fetch("//api/nutrition/regen-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lowNutrients: currentGaps, profile: userData, meal: meal })
