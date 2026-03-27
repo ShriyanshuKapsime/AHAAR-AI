@@ -298,19 +298,52 @@
       `).join('');
     }
 
-    async function retryMealPlan() {
+   async function retryMealPlan() {
       const icon = document.getElementById("retryIcon");
       icon.classList.add("animate-spin-slow");
+
       try {
+        const meal = document.getElementById("mealInput").value || "";
+        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+
         const res = await fetch("http://localhost:5000/api/nutrition/regen-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lowNutrients: currentGaps })
+          body: JSON.stringify({ lowNutrients: currentGaps, profile: userData, meal: meal })
         });
+        
         const data = await res.json();
-        renderMealPlan(data.mealPlan);
-      } catch (e) { console.error(e); }
-      setTimeout(() => icon.classList.remove("animate-spin-slow"), 800);
+        
+        // 1. Update the Meal Cards
+        if (data.mealPlan) {
+            renderMealPlan(data.mealPlan);
+        }
+
+        // 2. 🔥 Update the Actionable Tweaks & Symptoms UI
+        if (data.recommendation) {
+            // Update the main texts
+            document.getElementById("insightText").innerText = data.recommendation.symptoms || "Analysis complete.";
+            document.getElementById("recommendationShort").innerText = data.recommendation.short || "Analysis complete.";
+            
+            // Re-render the detailed list of tweaks
+            const list = document.getElementById("deficiencyList");
+            if (data.recommendation.details) {
+                list.innerHTML = data.recommendation.details.map(item => `
+                  <div class="p-3 bg-emerald-950/50 rounded-xl border border-emerald-800/30">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-[10px] font-bold text-saffron-400 uppercase tracking-tighter">${item.nutrient} Boost</span>
+                    </div>
+                    <p class="text-sm font-bold text-emerald-50">${item.suggestion}</p>
+                    <p class="text-[11px] text-emerald-400 italic mt-1">${item.reason}</p>
+                  </div>
+                `).join('');
+            }
+        }
+      } catch (e) { 
+          console.error("Failed to shuffle:", e); 
+      } finally {
+          setTimeout(() => icon.classList.remove("animate-spin-slow"), 800);
+      }
     }
 
     function logout() {

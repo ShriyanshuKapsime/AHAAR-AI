@@ -1,31 +1,46 @@
 const Groq = require("groq-sdk");
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-async function getSmartSuggestions(meal, lowNutrients) {
+// 🔥 Added 'isShuffle' parameter to force brand new, creative ideas
+async function getSmartSuggestions(meal, lowNutrients, profile = {}, isShuffle = false) {
     if (lowNutrients.length === 0) {
         return {
-            symptoms: "Your current intake is meeting clinical thresholds for these markers.",
-            short: "Great job! This meal is nutritionally balanced.",
+            symptoms: "Your current intake is perfectly aligning with your biological needs today.",
+            short: "Great job! Keep up this balanced eating.",
             details: []
         };
     }
 
-    const prompt = `
-    User ate: "${meal}"
-    Nutritional Gaps detected: ${lowNutrients.join(", ")}
+    const weight = profile.weight || 65;
+    const activity = profile.activity || "Moderate";
+    const age = profile.age || 25;
 
-    As an Indian Clinical Nutritionist:
-    1. Identify 2-3 specific symptoms associated with these deficiencies.
-    2. Suggest 2-3 STRICTLY VEGETARIAN Indian "Add-ons" (No meat, No fish, No eggs).
+    // 🔥 The Shuffle Directive: Forces the AI to abandon basic answers
+    const shuffleRule = isShuffle 
+        ? "SHUFFLE MODE IS ACTIVE: You MUST provide COMPLETELY DIFFERENT tweaks than standard advice. Do not just suggest Paneer or simple Sprouts again. Think of unique, lesser-known seeds, specific nuts, or unique regional add-ons." 
+        : "";
+
+    const prompt = `
+    You are AHAAR, an empathetic, highly knowledgeable AI Clinical Nutritionist. 
     
-    CRITICAL RULE: Suggest only Vegetarian items like Paneer, Soya, Sprouts, Curd, Nuts, or specific Dals.
+    USER BIOLOGY: ${age} years old, ${weight}kg, Activity Level: ${activity}.
+    USER ATE: "${meal}"
+    NUTRITIONAL GAPS: ${lowNutrients.join(", ")}
+
+    Your goal is to act as a supportive, personalized health coach.
+    1. Tone: Warm, direct, and clinical but easy to understand.
+    2. Symptoms: Identify 1-2 subtle symptoms they might feel based on their specific body weight/activity level if these gaps continue.
+    3. TWEAKS, NOT NEW MEALS: Suggest 2-3 STRICTLY VEGETARIAN Indian "Add-ons" or "Tweaks" to the EXACT meal they just ate.
+    
+    CRITICAL RULE: Suggest only Vegetarian items. No meat, fish, or eggs.
+    ${shuffleRule}
 
     Return ONLY a JSON object:
     {
-      "symptoms": "A short warning about symptoms (e.g., fatigue, low immunity) if these gaps continue.",
-      "short": "A one-sentence summary of what to add.",
+      "symptoms": "A warm, empathetic warning about symptoms (e.g., fatigue during workouts) if gaps continue.",
+      "short": "A friendly, one-sentence summary of the exact tweak to make.",
       "details": [
-        {"nutrient": "Nutrient Name", "suggestion": "Specific VEG food item", "reason": "Why this pairing works with the meal"}
+        {"nutrient": "Nutrient Name", "suggestion": "Specific VEG food item", "reason": "Why this specific food fits perfectly with what they just ate"}
       ]
     }
     `;
@@ -35,37 +50,52 @@ async function getSmartSuggestions(meal, lowNutrients) {
             model: "llama-3.1-8b-instant",
             messages: [{ role: "user", content: prompt }],
             response_format: { type: "json_object" },
-            temperature: 0.2
+            // 🔥 Higher temperature on shuffle makes the AI much more creative
+            temperature: isShuffle ? 0.8 : 0.3 
         });
         return JSON.parse(res.choices[0].message.content);
     } catch (err) {
         console.error("Recommender AI Error:", err);
         return { 
-            symptoms: "Prolonged deficiency may lead to reduced energy levels.",
-            short: "Consider adding sprouts or curd to balance your meal.", 
-            details: [{ nutrient: "General", suggestion: "Mixed Sprouts", reason: "Adds fiber and protein to any Indian meal." }] 
+            symptoms: "Prolonged deficiency may lead to reduced energy levels during your daily activities.",
+            short: "Consider adding sprouts or seeds to balance your meal.", 
+            details: [{ nutrient: "General", suggestion: "Mixed Sprouts", reason: "Adds quick fiber and protein." }] 
         };
     }
 }
 
-async function getTomorrowMealPlan(lowNutrients) {
+// 🔥 Added 'isShuffle' here as well
+async function getTomorrowMealPlan(lowNutrients, profile = {}, currentMeal = "", isShuffle = false) {
     const gaps = lowNutrients.length > 0 ? lowNutrients.join(", ") : "General Health";
+    const activity = profile.activity || "Moderate";
     
+    // 🔥 The Shuffle Directive for Meals
+    const shuffleRule = isShuffle 
+        ? "SHUFFLE MODE IS ACTIVE: DO NOT suggest standard Dal, Paneer, or Poha. Provide COMPLETELY UNIQUE, lesser-known, highly creative regional Indian veg dishes. Think outside the box!" 
+        : "";
+
     const prompt = `
-    Today the user was low on: ${gaps}.
-    Generate a 3-meal STRICTLY VEGETARIAN Indian plan (Breakfast, Lunch, Dinner) for tomorrow.
+    You are AHAAR, an empathetic AI Clinical Nutritionist.
     
-    RULES:
+    USER PROFILE: Activity Level: ${activity}.
+    MISSING NUTRIENTS TODAY: ${gaps}.
+    WHAT THEY ATE TODAY: "${currentMeal}" 
+
+    Generate a 3-meal STRICTLY VEGETARIAN Indian plan for tomorrow.
+    
+    RULES FOR PERSONALIZATION:
     1. NO MEAT, NO FISH, NO EGGS.
-    2. Focus on high-protein/high-mineral veg sources (Soya, Paneer, Rajma, Chana, Palak).
-    3. Keep it realistic for a home-cooked Indian diet.
+    2. DYNAMIC REGIONAL DIET: Analyze what they ate today ("${currentMeal}"). If it sounds South Indian, suggest a South Indian recovery plan. If North Indian, suggest North Indian. Match their local palate!
+    3. ACTIVITY MATCH: If they are highly active, suggest protein-heavy recovery meals. If sedentary, keep the meals lighter but nutrient-dense.
+    4. Keep it realistic for a home-cooked Indian diet.
+    ${shuffleRule}
     
     Return ONLY JSON:
     {
       "meals": [
-        {"type": "Breakfast", "dish": "Name of Veg dish", "benefit": "How it fixes ${gaps}"},
-        {"type": "Lunch", "dish": "Name of Veg dish", "benefit": "How it fixes ${gaps}"},
-        {"type": "Dinner", "dish": "Name of Veg dish", "benefit": "How it fixes ${gaps}"}
+        {"type": "Breakfast", "dish": "Name of dynamic regional Veg dish", "benefit": "How it fixes ${gaps} and fits their activity level"},
+        {"type": "Lunch", "dish": "Name of dynamic regional Veg dish", "benefit": "How it fixes ${gaps}"},
+        {"type": "Dinner", "dish": "Name of dynamic regional Veg dish", "benefit": "How it fixes ${gaps}"}
       ]
     }
     `;
@@ -74,7 +104,9 @@ async function getTomorrowMealPlan(lowNutrients) {
         const res = await groq.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" }
+            response_format: { type: "json_object" },
+            // 🔥 Boost creativity on shuffle
+            temperature: isShuffle ? 0.8 : 0.4 
         });
         return JSON.parse(res.choices[0].message.content);
     } catch (err) {

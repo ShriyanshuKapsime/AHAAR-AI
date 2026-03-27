@@ -63,9 +63,10 @@ router.post('/analyze', async (req, res) => {
             .filter(key => key !== 'calories' && percentages[key] < 60)
             .map(key => key.charAt(0).toUpperCase() + key.slice(1));
 
-        // 5. Call AI for Dynamic Clinical Insights & Meal Plan
-        const smartRecommendation = await getSmartSuggestions(meal, lowNutrients);
-        const mealPlan = await getTomorrowMealPlan(lowNutrients);
+        // Step E: Call AI Agents for Symptoms and Recommendations
+        // 🔥 Now passing the profile and the meal string to the agents!
+        const smartRecommendation = await getSmartSuggestions(meal, lowNutrients, profile);
+        const mealPlan = await getTomorrowMealPlan(lowNutrients, profile, meal);
 
        res.json({
             raw: mealTotals,
@@ -95,10 +96,21 @@ router.post('/analyze', async (req, res) => {
 /**
  * Retry Route for regenerating the meal plan specifically
  */
+// At the bottom of src/routes/nutrition.js
 router.post('/regen-plan', async (req, res) => {
     try {
-        const mealPlan = await getTomorrowMealPlan(req.body.lowNutrients || []);
-        res.json({ mealPlan: mealPlan.meals });
+        const { lowNutrients, profile, meal } = req.body;
+        const gaps = lowNutrients && lowNutrients.length > 0 ? lowNutrients : ["Protein", "Iron"];
+        
+        // Notice the 'true' at the end! This activates the Randomizers we just built.
+        const mealPlan = await getTomorrowMealPlan(gaps, profile, meal, true);
+        const smartRecommendation = await getSmartSuggestions(meal, gaps, profile, true);
+
+        // MUST SEND BOTH BACK TO THE FRONTEND
+        res.json({ 
+            mealPlan: mealPlan.meals,
+            recommendation: smartRecommendation 
+        });
     } catch (e) {
         res.status(500).json({ error: "Regen failed" });
     }
