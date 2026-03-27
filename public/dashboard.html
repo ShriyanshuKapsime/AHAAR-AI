@@ -306,7 +306,7 @@
         const meal = document.getElementById("mealInput").value || "";
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-        const res = await fetch("//api/nutrition/regen-plan", {
+        const res = await fetch("/api/nutrition/regen-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lowNutrients: currentGaps, profile: userData, meal: meal })
